@@ -33,6 +33,12 @@ def run_scan(
             proxy=options.get("proxy"),
             base_interval=options.get("base_interval", 0.05),
             allow_redirects=options.get("allow_redirects", True),
+            headers=options.get("headers"),
+            cookies=options.get("cookies"),
+            max_requests=int(options.get("max_requests", 0) or 0),
+            scope_host=target.host,
+            include=options.get("include"),
+            exclude=options.get("exclude"),
         )
 
     tools = detect_tools() if detect_external else {}
@@ -52,6 +58,16 @@ def run_scan(
         target.fingerprint = fingerprint_web(ctx)
         if target.fingerprint.get("reachable") is False:
             result.errors.append("target did not respond to the initial request")
+        if options.get("spa"):
+            from .spa import is_available, render_and_extract
+
+            if is_available():
+                seeds = render_and_extract(target.base_url())
+                if seeds:
+                    target.metadata["seed_urls"] = seeds
+                    log(f"spa crawl seeded {len(seeds)} urls")
+            else:
+                log("spa requested but playwright is not installed (pip install 'fya[browser]')")
 
     checks = applicable_checks(ctx)
     if categories:

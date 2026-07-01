@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import re
 import threading
 import time
 import uuid
 from typing import Optional
+from urllib.parse import urlsplit
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -24,6 +26,12 @@ class AdaptiveHTTP:
         base_interval: float = 0.05,
         max_interval: float = 3.0,
         allow_redirects: bool = True,
+        headers: Optional[dict] = None,
+        cookies: Optional[dict] = None,
+        max_requests: int = 0,
+        scope_host: Optional[str] = None,
+        include: Optional[list] = None,
+        exclude: Optional[list] = None,
     ):
         self.timeout = timeout
         self.verify = verify
@@ -34,9 +42,17 @@ class AdaptiveHTTP:
         self._next_allowed = 0.0
         self._lock = threading.Lock()
         self.request_count = 0
+        self.max_requests = max_requests
+        self.scope_host = scope_host
+        self._include = [re.compile(p) for p in (include or [])]
+        self._exclude = [re.compile(p) for p in (exclude or [])]
 
         self.session = requests.Session()
         self.session.headers["User-Agent"] = user_agent
+        if headers:
+            self.session.headers.update(headers)
+        if cookies:
+            self.session.cookies.update(cookies)
         if proxy:
             self.session.proxies.update({"http": proxy, "https": proxy})
         retry = Retry(total=2, backoff_factor=0.4, status_forcelist=[], raise_on_status=False)
@@ -65,7 +81,25 @@ class AdaptiveHTTP:
             else:
                 self._interval = max(self._base_interval, self._interval * 0.9)
 
+    def _in_scope(self, url: str) -> bool:
+        try:
+            parts = urlsplit(url)
+        except ValueError:
+            return False
+        if self.scope_host and parts.hostname and parts.hostname != self.scope_host:
+            return False
+        path = parts.path or "/"
+        if self._exclude and any(rx.search(path) for rx in self._exclude):
+            return False
+        if self._include and not any(rx.search(path) for rx in self._include):
+            return False
+        return True
+
     def request(self, method: str, url: str, **kwargs) -> Optional[requests.Response]:
+        if self.max_requests and self.request_count >= self.max_requests:
+            return None
+        if not self._in_scope(url):
+            return None
         kwargs.setdefault("timeout", self.timeout)
         kwargs.setdefault("verify", self.verify)
         kwargs.setdefault("allow_redirects", self.allow_redirects)

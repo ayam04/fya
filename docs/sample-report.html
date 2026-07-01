@@ -25,9 +25,9 @@ footer{color:#565f6b;font-size:12px;margin-top:24px;border-top:1px solid #21262d
 </style></head><body><div class="wrap">
 <h1>fya scan report</h1>
 <div class="sub">http://127.0.0.1:5099 | kind web |
-profile aggressive | 6.5s |
-24 checks</div>
-<div class="chips"><span class="chip" style="border-color:#ff784e;color:#ff784e">7 high</span><span class="chip" style="border-color:#f5b301;color:#f5b301">5 medium</span><span class="chip" style="border-color:#4db8ff;color:#4db8ff">3 low</span><span class="chip" style="border-color:#8a94a6;color:#8a94a6">1 info</span></div>
+profile aggressive | 7.3s |
+31 checks</div>
+<div class="chips"><span class="chip" style="border-color:#ff784e;color:#ff784e">7 high</span><span class="chip" style="border-color:#f5b301;color:#f5b301">5 medium</span><span class="chip" style="border-color:#4db8ff;color:#4db8ff">3 low</span><span class="chip" style="border-color:#8a94a6;color:#8a94a6">2 info</span></div>
 
       <article class="card">
         <header>
@@ -36,9 +36,9 @@ profile aggressive | 6.5s |
         </header>
         <div class="meta">A03:2021 Injection | CWE CWE-1336
           | confidence high | http://127.0.0.1:5099/greet?name=world [param: name]</div>
-        <p>A template expression injected into parameter &#x27;name&#x27; was evaluated by the server. The product 49660049 appeared in the response but the literal payload did not, confirming server-side evaluation. Engine hint: jinja2/twig/django.</p>
+        <p>Template expressions injected into parameter &#x27;name&#x27; were evaluated by the server. Two distinct products (49660049 and 33134261) appeared for their respective payloads, were absent from a benign baseline, and the literal payloads did not appear, confirming server-side evaluation. Engine hint: jinja2/twig/django.</p>
         <div class="rem"><b>Fix.</b> Never pass user input to template rendering functions. Use template variables with auto-escaping and sandboxed template engines where dynamic template construction is needed.</div>
-        <pre>payload: {{7919*6271}}, evaluated product: 49660049 found in response</pre>
+        <pre>payload: {{7919*6271}}, evaluated products: 49660049, 33134261 found in response</pre>
         <div class="refs"><a href="https://owasp.org/www-community/attacks/Server_Side_Template_Injection" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/Server_Side_Template_Injection</a><a href="https://cwe.mitre.org/data/definitions/1336.html" target="_blank" rel="noopener">https://cwe.mitre.org/data/definitions/1336.html</a></div>
       </article>
 
@@ -74,10 +74,10 @@ profile aggressive | 6.5s |
           <h3>Reflected XSS via parameter &#x27;q&#x27;</h3>
         </header>
         <div class="meta">A03:2021 Injection | CWE CWE-79
-          | confidence high | http://127.0.0.1:5099/search?q=phone [param: q]</div>
-        <p>A unique probe injected into this parameter was reflected in the HTML response without encoding, so attacker-controlled markup executes in the victim browser.</p>
+          | confidence medium | http://127.0.0.1:5099/search?q=phone [param: q]</div>
+        <p>A unique probe injected into this parameter was reflected into the HTML response without entity-encoding the angle brackets, which may allow script injection depending on the output context. Manual confirmation of the reflection context is recommended.</p>
         <div class="rem"><b>Fix.</b> Contextually encode all user input on output and apply a strict Content-Security-Policy. Prefer framework auto-escaping.</div>
-        <pre>reflected unescaped: &amp;lt;fya&amp;gt;fya1da20be8c5cd&amp;lt;/fya&amp;gt;</pre>
+        <pre>reflected unescaped: &amp;lt;fya&amp;gt;fya0512c2a6b09e&amp;lt;/fya&amp;gt;</pre>
         <div class="refs"><a href="https://owasp.org/www-community/attacks/xss/" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/xss/</a></div>
       </article>
 
@@ -87,10 +87,10 @@ profile aggressive | 6.5s |
           <h3>Reflected XSS via parameter &#x27;name&#x27;</h3>
         </header>
         <div class="meta">A03:2021 Injection | CWE CWE-79
-          | confidence high | http://127.0.0.1:5099/greet?name=world [param: name]</div>
-        <p>A unique probe injected into this parameter was reflected in the HTML response without encoding, so attacker-controlled markup executes in the victim browser.</p>
+          | confidence medium | http://127.0.0.1:5099/greet?name=world [param: name]</div>
+        <p>A unique probe injected into this parameter was reflected into the HTML response without entity-encoding the angle brackets, which may allow script injection depending on the output context. Manual confirmation of the reflection context is recommended.</p>
         <div class="rem"><b>Fix.</b> Contextually encode all user input on output and apply a strict Content-Security-Policy. Prefer framework auto-escaping.</div>
-        <pre>reflected unescaped: &amp;lt;fya&amp;gt;fya1c5e70799ba3&amp;lt;/fya&amp;gt;</pre>
+        <pre>reflected unescaped: &amp;lt;fya&amp;gt;fya0bccb01573a4&amp;lt;/fya&amp;gt;</pre>
         <div class="refs"><a href="https://owasp.org/www-community/attacks/xss/" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/xss/</a></div>
       </article>
 
@@ -101,9 +101,9 @@ profile aggressive | 6.5s |
         </header>
         <div class="meta">A03:2021 Injection | CWE CWE-93
           | confidence high | http://127.0.0.1:5099/setheader?lang=en [param: lang]</div>
-        <p>A CR LF sequence injected into parameter &#x27;lang&#x27; caused the server to emit an attacker-controlled response header (&#x27;Fya-Test: fya3341886fa529&#x27;). This enables HTTP response splitting, cache poisoning, and cookie injection.</p>
+        <p>A CR LF sequence injected into parameter &#x27;lang&#x27; caused the server to emit an attacker-controlled response header (&#x27;Fya-Test: fya81044298f54c&#x27;). This enables HTTP response splitting, cache poisoning, and cookie injection.</p>
         <div class="rem"><b>Fix.</b> Strip or reject CR (\r) and LF (\n) characters from any value that flows into response headers. Use framework abstractions that handle header encoding.</div>
-        <pre>injected header Fya-Test: fya3341886fa529</pre>
+        <pre>injected header Fya-Test: fya81044298f54c</pre>
         <div class="refs"><a href="https://owasp.org/www-community/attacks/HTTP_Response_Splitting" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/HTTP_Response_Splitting</a><a href="https://cwe.mitre.org/data/definitions/93.html" target="_blank" rel="noopener">https://cwe.mitre.org/data/definitions/93.html</a></div>
       </article>
 
@@ -129,7 +129,7 @@ profile aggressive | 6.5s |
           | confidence high | http://127.0.0.1:5099/go?url=/ [param: url]</div>
         <p>This parameter controls the redirect target without validation, so an attacker can send victims to an arbitrary external site for phishing.</p>
         <div class="rem"><b>Fix.</b> Redirect only to a server-side allowlist of paths or hosts. Reject absolute external URLs supplied by the client.</div>
-        <pre>Location: https://fya-oob.example/fya007a8793a84e</pre>
+        <pre>payload: https://fya-oob.example/fyaa563e588a982; https://fya-oob.example/fyaa563e588a982</pre>
         <div class="refs"><a href="https://owasp.org/www-community/attacks/Unvalidated_Redirects_and_Forwards_Cheat_Sheet" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/Unvalidated_Redirects_and_Forwards_Cheat_Sheet</a></div>
       </article>
 
@@ -155,7 +155,7 @@ profile aggressive | 6.5s |
           | confidence medium | http://127.0.0.1:5099/link</div>
         <p>The application reflects the HTTP Host header value into its response without validation. An attacker can poison password-reset links, cache entries, or absolute URLs by supplying a crafted Host header.</p>
         <div class="rem"><b>Fix.</b> Maintain a server-side allowlist of valid hostnames. Never use the request Host header to construct absolute URLs or links.</div>
-        <pre>reflected in response body; reflected in absolute link: http://fyaa18d9c9f2894.evil.example/</pre>
+        <pre>reflected in response body; reflected in absolute link: http://fya91b909298fd2.evil.example/</pre>
         <div class="refs"><a href="https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_Host_Header_Injection" target="_blank" rel="noopener">https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_Host_Header_Injection</a><a href="https://cwe.mitre.org/data/definitions/644.html" target="_blank" rel="noopener">https://cwe.mitre.org/data/definitions/644.html</a></div>
       </article>
 
@@ -178,7 +178,7 @@ profile aggressive | 6.5s |
           <h3>CSRF: POST form at &#x27;http://127.0.0.1:5099/transfer&#x27; has no CSRF token</h3>
         </header>
         <div class="meta">A01:2021 Broken Access Control | CWE CWE-352
-          | confidence medium | http://127.0.0.1:5099/transfer</div>
+          | confidence low | http://127.0.0.1:5099/transfer</div>
         <p>A POST form targeting &#x27;http://127.0.0.1:5099/transfer&#x27; contains no hidden input whose name matches known CSRF token field names (csrf, xsrf, _token, authenticity_token, csrfmiddlewaretoken, nonce). Without a token an attacker can forge requests on behalf of authenticated users.</p>
         <div class="rem"><b>Fix.</b> Add a secret per-session CSRF token to every state-changing form and verify it server-side. Consider the SameSite=Strict cookie attribute as a defence-in-depth measure.</div>
         <pre>form inputs found: amount</pre>
@@ -222,6 +222,19 @@ profile aggressive | 6.5s |
         <div class="rem"><b>Fix.</b> Add X-Content-Type-Options: nosniff to all responses.</div>
         <pre>response headers: [&#x27;connection&#x27;, &#x27;content-length&#x27;, &#x27;content-type&#x27;, &#x27;date&#x27;, &#x27;server&#x27;, &#x27;set-cookie&#x27;]</pre>
         <div class="refs"><a href="https://owasp.org/www-project-secure-headers/" target="_blank" rel="noopener">https://owasp.org/www-project-secure-headers/</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#8a94a6">info</span>
+          <h3>No security.txt published</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration
+          | confidence high | http://127.0.0.1:5099/.well-known/security.txt</div>
+        <p>No valid security.txt was found at /.well-known/security.txt or /security.txt. A security.txt file gives researchers a documented channel to report vulnerabilities.</p>
+        <div class="rem"><b>Fix.</b> Publish a security.txt at /.well-known/security.txt with a Contact and Policy field.</div>
+        <pre>checked: /.well-known/security.txt, /security.txt</pre>
+        <div class="refs"><a href="https://securitytxt.org" target="_blank" rel="noopener">https://securitytxt.org</a></div>
       </article>
 
       <article class="card">

@@ -89,6 +89,8 @@ def to_sarif(result: ScanResult) -> str:
                 "id": f.check,
                 "name": f.check,
                 "shortDescription": {"text": f.title},
+                "fullDescription": {"text": f.description},
+                "help": {"text": f.remediation or f.description},
                 "helpUri": (f.references[0] if f.references else "https://github.com/ayam04/fya"),
                 "properties": {"category": f.category, "cwe": f.cwe},
             }
@@ -110,6 +112,7 @@ def to_sarif(result: ScanResult) -> str:
                     "evidence": f.evidence,
                     "remediation": f.remediation,
                 },
+                "partialFingerprints": {"fya/v1": f.key()},
             }
         )
     doc = {

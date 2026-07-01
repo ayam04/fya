@@ -115,6 +115,9 @@ def _discover(ctx: ScanContext, cap: int, extra_params: set):
         seeds.append(base)
     if ctx.target.url:
         seeds.append(ctx.target.url)
+    for extra in ctx.target.metadata.get("seed_urls", []):
+        if extra not in seeds:
+            seeds.append(extra)
 
     for seed in seeds:
         response = ctx.http.get(seed)
@@ -184,7 +187,7 @@ class ReflectedXSS(Check):
                 if response is None:
                     continue
                 content_type = response.headers.get("content-type", "").lower()
-                if "html" not in content_type and "html" not in (response.text or "")[:200].lower():
+                if "text/html" not in content_type and "application/xhtml" not in content_type:
                     continue
                 body = response.text or ""
                 if payload in body:
@@ -196,11 +199,12 @@ class ReflectedXSS(Check):
                         check=self.name,
                         title=f"Reflected XSS via parameter '{param}'",
                         severity=Severity.HIGH,
-                        confidence=Confidence.HIGH,
+                        confidence=Confidence.MEDIUM,
                         category="A03:2021 Injection",
                         cwe="CWE-79",
-                        description="A unique probe injected into this parameter was reflected in the HTML "
-                        "response without encoding, so attacker-controlled markup executes in the victim browser.",
+                        description="A unique probe injected into this parameter was reflected into the HTML "
+                        "response without entity-encoding the angle brackets, which may allow script injection "
+                        "depending on the output context. Manual confirmation of the reflection context is recommended.",
                         remediation="Contextually encode all user input on output and apply a strict "
                         "Content-Security-Policy. Prefer framework auto-escaping.",
                         location=location,
@@ -264,19 +268,40 @@ class OpenRedirect(Check):
         cap = _AGGRESSIVE_CRAWL_CAP if ctx.profile is Profile.AGGRESSIVE else _SAFE_CRAWL_CAP
         redirect_names = _AGGRESSIVE_REDIRECT_PARAMS if ctx.profile is Profile.AGGRESSIVE else _REDIRECT_PARAMS
         marker = ctx.http.marker()
-        external = f"https://fya-oob.example/{marker}"
+        oob_host = "fya-oob.example"
+        payloads = [
+            f"https://{oob_host}/{marker}",
+            f"//{oob_host}/{marker}",
+            f"\\\\{oob_host}\\{marker}",
+        ]
         seen = set()
         for url, params in _discover(ctx, cap, set()):
             candidates = {p for p in params if p and p.lower() in redirect_names}
             for param in candidates:
-                probe = _set_param(url, param, external)
-                response = ctx.http.get(probe, allow_redirects=False)
-                if response is None:
-                    continue
-                if response.status_code not in (301, 302, 303, 307, 308):
-                    continue
-                location_header = response.headers.get("location", "")
-                if external in location_header or location_header.startswith("//fya-oob.example"):
+                hit = None
+                for payload in payloads:
+                    probe = _set_param(url, param, payload)
+                    response = ctx.http.get(probe, allow_redirects=False)
+                    if response is None:
+                        continue
+                    if response.status_code not in (301, 302, 303, 307, 308):
+                        continue
+                    location_header = response.headers.get("location", "")
+                    refresh_header = response.headers.get("refresh", "")
+                    redirect_host = ""
+                    try:
+                        redirect_host = urlparse(location_header.replace("\\", "/")).hostname or ""
+                    except ValueError:
+                        redirect_host = ""
+                    if (
+                        redirect_host == oob_host
+                        or oob_host in location_header
+                        or oob_host in refresh_header
+                    ):
+                        hit = (payload, location_header or f"Refresh: {refresh_header}")
+                        break
+                if hit is not None:
+                    used_payload, evidence_value = hit
                     location = f"{url} [param: {param}]"
                     if location in seen:
                         continue
@@ -293,7 +318,7 @@ class OpenRedirect(Check):
                         remediation="Redirect only to a server-side allowlist of paths or hosts. Reject "
                         "absolute external URLs supplied by the client.",
                         location=location,
-                        evidence=f"Location: {location_header}",
+                        evidence=f"payload: {used_payload}; {evidence_value}",
                         references=["https://owasp.org/www-community/attacks/Unvalidated_Redirects_and_Forwards_Cheat_Sheet"],
                     )
 
@@ -369,8 +394,7 @@ class CORSMisconfig(Check):
                 continue
             acao = response.headers.get("access-control-allow-origin", "")
             acac = response.headers.get("access-control-allow-credentials", "").lower()
-            reflects = acao == evil or acao == "*"
-            if reflects and acac == "true":
+            if acao == evil and acac == "true":
                 yield Finding(
                     check=self.name,
                     title="CORS reflects arbitrary origin with credentials",
@@ -381,6 +405,23 @@ class CORSMisconfig(Check):
                     description="The response reflects an attacker-supplied Origin into "
                     "Access-Control-Allow-Origin while also allowing credentials, letting a malicious site "
                     "read authenticated responses.",
+                    remediation="Validate Origin against a strict server-side allowlist and never combine a "
+                    "wildcard or reflected origin with Access-Control-Allow-Credentials: true.",
+                    location=url,
+                    evidence=f"Access-Control-Allow-Origin: {acao}; Access-Control-Allow-Credentials: {acac}",
+                    references=["https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny"],
+                )
+            elif acao == "*" and acac == "true":
+                yield Finding(
+                    check=self.name,
+                    title="CORS wildcard origin combined with credentials",
+                    severity=Severity.LOW,
+                    confidence=Confidence.LOW,
+                    category="A05:2021 Security Misconfiguration",
+                    cwe="CWE-942",
+                    description="The response sets Access-Control-Allow-Origin to the literal wildcard along "
+                    "with Access-Control-Allow-Credentials: true. Browsers reject credentialed responses under "
+                    "a wildcard origin, so this is not directly exploitable but reflects a misconfigured policy.",
                     remediation="Validate Origin against a strict server-side allowlist and never combine a "
                     "wildcard or reflected origin with Access-Control-Allow-Credentials: true.",
                     location=url,

@@ -22,6 +22,12 @@ _CSRF_NAMES = re.compile(
     re.IGNORECASE,
 )
 
+_CSRF_META_RE = re.compile(
+    r"""<meta\b[^>]*?\bname\s*=\s*["'][^"'>]*(?:csrf|xsrf)[^"'>]*["']""",
+    re.IGNORECASE,
+)
+_SAMESITE_RE = re.compile(r"""samesite\s*=\s*(lax|strict)""", re.IGNORECASE)
+
 _SAFE_CAP = 20
 _AGGRESSIVE_CAP = 50
 
@@ -147,6 +153,8 @@ def _collect_post_forms(ctx: ScanContext, cap: int):
             if absolute not in visited:
                 to_visit.append(absolute)
 
+        set_cookie = response.headers.get("set-cookie", "") or ""
+
         for full_form in _FULL_FORM_RE.findall(body):
             if not _FORM_METHOD_RE.search(full_form):
                 continue
@@ -154,7 +162,7 @@ def _collect_post_forms(ctx: ScanContext, cap: int):
             action = action_match.group(1) if action_match else url
             action_url = urljoin(url, action or url)
             input_names = set(_INPUT_NAME_RE.findall(full_form))
-            forms.append((action_url, full_form, input_names))
+            forms.append((action_url, full_form, input_names, body, set_cookie))
             if len(forms) >= cap:
                 break
 
@@ -190,51 +198,66 @@ class SSTI(Check):
         )
         seen = set()
         discovered = _local_discover(ctx, cap)
+        factor_pairs = [(7919, 6271), (4133, 8017)]
 
         for url, params in discovered:
             for param in params:
                 if not param:
                     continue
-                n1, n2 = 7919, 6271
-                product = str(n1 * n2)
+                baseline = ctx.http.get(_set_param(url, param, "fyabaseline"))
+                if baseline is None:
+                    continue
+                baseline_body = baseline.text or ""
+                products = [str(n1 * n2) for n1, n2 in factor_pairs]
+                if any(product in baseline_body for product in products):
+                    continue
                 for template, engine_hint in payload_templates:
-                    payload = template.replace("N1", str(n1)).replace("N2", str(n2))
-                    probe = _set_param(url, param, payload)
-                    response = ctx.http.get(probe)
-                    if response is None:
+                    confirmed = True
+                    for (n1, n2), product in zip(factor_pairs, products):
+                        payload = template.replace("N1", str(n1)).replace("N2", str(n2))
+                        response = ctx.http.get(_set_param(url, param, payload))
+                        if response is None:
+                            confirmed = False
+                            break
+                        body = response.text or ""
+                        if product not in body or payload in body:
+                            confirmed = False
+                            break
+                    if not confirmed:
                         continue
-                    body = response.text or ""
-                    if product in body and payload not in body:
-                        location = f"{url} [param: {param}]"
-                        if location in seen:
-                            continue
-                        seen.add(location)
-                        yield Finding(
-                            check=self.name,
-                            title=f"Server-Side Template Injection via parameter '{param}'",
-                            severity=Severity.HIGH,
-                            confidence=Confidence.HIGH,
-                            category="A03:2021 Injection",
-                            cwe="CWE-1336",
-                            description=(
-                                f"A template expression injected into parameter '{param}' "
-                                f"was evaluated by the server. The product {product} appeared "
-                                f"in the response but the literal payload did not, confirming "
-                                f"server-side evaluation. Engine hint: {engine_hint}."
-                            ),
-                            remediation=(
-                                "Never pass user input to template rendering functions. "
-                                "Use template variables with auto-escaping and sandboxed "
-                                "template engines where dynamic template construction is needed."
-                            ),
-                            location=location,
-                            evidence=f"payload: {payload}, evaluated product: {product} found in response",
-                            references=[
-                                "https://owasp.org/www-community/attacks/Server_Side_Template_Injection",
-                                "https://cwe.mitre.org/data/definitions/1336.html",
-                            ],
-                        )
+                    location = f"{url} [param: {param}]"
+                    if location in seen:
                         break
+                    seen.add(location)
+                    sample_n1, sample_n2 = factor_pairs[0]
+                    sample_payload = template.replace("N1", str(sample_n1)).replace("N2", str(sample_n2))
+                    yield Finding(
+                        check=self.name,
+                        title=f"Server-Side Template Injection via parameter '{param}'",
+                        severity=Severity.HIGH,
+                        confidence=Confidence.HIGH,
+                        category="A03:2021 Injection",
+                        cwe="CWE-1336",
+                        description=(
+                            f"Template expressions injected into parameter '{param}' "
+                            f"were evaluated by the server. Two distinct products ({products[0]} "
+                            f"and {products[1]}) appeared for their respective payloads, were "
+                            f"absent from a benign baseline, and the literal payloads did not "
+                            f"appear, confirming server-side evaluation. Engine hint: {engine_hint}."
+                        ),
+                        remediation=(
+                            "Never pass user input to template rendering functions. "
+                            "Use template variables with auto-escaping and sandboxed "
+                            "template engines where dynamic template construction is needed."
+                        ),
+                        location=location,
+                        evidence=f"payload: {sample_payload}, evaluated products: {', '.join(products)} found in response",
+                        references=[
+                            "https://owasp.org/www-community/attacks/Server_Side_Template_Injection",
+                            "https://cwe.mitre.org/data/definitions/1336.html",
+                        ],
+                    )
+                    break
 
 
 @register
@@ -249,38 +272,43 @@ class CSRF(Check):
         seen = set()
         forms = _collect_post_forms(ctx, cap)
 
-        for action_url, _full_form, input_names in forms:
+        for action_url, _full_form, input_names, page_body, set_cookie in forms:
             has_token = any(_CSRF_NAMES.match(name) for name in input_names)
-            if not has_token:
-                location = action_url
-                if location in seen:
-                    continue
-                seen.add(location)
-                yield Finding(
-                    check=self.name,
-                    title=f"CSRF: POST form at '{action_url}' has no CSRF token",
-                    severity=Severity.MEDIUM,
-                    confidence=Confidence.MEDIUM,
-                    category="A01:2021 Broken Access Control",
-                    cwe="CWE-352",
-                    description=(
-                        f"A POST form targeting '{action_url}' contains no hidden input "
-                        "whose name matches known CSRF token field names (csrf, xsrf, "
-                        "_token, authenticity_token, csrfmiddlewaretoken, nonce). "
-                        "Without a token an attacker can forge requests on behalf of authenticated users."
-                    ),
-                    remediation=(
-                        "Add a secret per-session CSRF token to every state-changing form "
-                        "and verify it server-side. Consider the SameSite=Strict cookie attribute "
-                        "as a defence-in-depth measure."
-                    ),
-                    location=location,
-                    evidence=f"form inputs found: {', '.join(sorted(input_names)) or 'none'}",
-                    references=[
-                        "https://owasp.org/www-community/attacks/csrf",
-                        "https://cwe.mitre.org/data/definitions/352.html",
-                    ],
-                )
+            if has_token:
+                continue
+            if _CSRF_META_RE.search(page_body or ""):
+                continue
+            if _SAMESITE_RE.search(set_cookie or ""):
+                continue
+            location = action_url
+            if location in seen:
+                continue
+            seen.add(location)
+            yield Finding(
+                check=self.name,
+                title=f"CSRF: POST form at '{action_url}' has no CSRF token",
+                severity=Severity.MEDIUM,
+                confidence=Confidence.LOW,
+                category="A01:2021 Broken Access Control",
+                cwe="CWE-352",
+                description=(
+                    f"A POST form targeting '{action_url}' contains no hidden input "
+                    "whose name matches known CSRF token field names (csrf, xsrf, "
+                    "_token, authenticity_token, csrfmiddlewaretoken, nonce). "
+                    "Without a token an attacker can forge requests on behalf of authenticated users."
+                ),
+                remediation=(
+                    "Add a secret per-session CSRF token to every state-changing form "
+                    "and verify it server-side. Consider the SameSite=Strict cookie attribute "
+                    "as a defence-in-depth measure."
+                ),
+                location=location,
+                evidence=f"form inputs found: {', '.join(sorted(input_names)) or 'none'}",
+                references=[
+                    "https://owasp.org/www-community/attacks/csrf",
+                    "https://cwe.mitre.org/data/definitions/352.html",
+                ],
+            )
 
 
 @register

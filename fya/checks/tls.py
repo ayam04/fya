@@ -62,6 +62,41 @@ def _decode_der(der):
     if not der:
         return {}
     try:
+        from cryptography.x509 import load_der_x509_certificate
+    except ImportError:
+        return _decode_der_legacy(der)
+    try:
+        from cryptography.x509.oid import NameOID
+
+        cert = load_der_x509_certificate(der)
+
+        def _rdns(name):
+            entries = []
+            for attr in name.get_attributes_for_oid(NameOID.COMMON_NAME):
+                entries.append((("commonName", attr.value),))
+            return tuple(entries)
+
+        try:
+            not_after = cert.not_valid_after_utc
+            not_before = cert.not_valid_before_utc
+        except AttributeError:
+            not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)
+            not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
+
+        return {
+            "subject": _rdns(cert.subject),
+            "issuer": _rdns(cert.issuer),
+            "notAfter": not_after.strftime(_CERT_DATE_FORMAT).replace("UTC", "GMT"),
+            "notBefore": not_before.strftime(_CERT_DATE_FORMAT).replace("UTC", "GMT"),
+        }
+    except Exception:
+        return {}
+
+
+def _decode_der_legacy(der):
+    if not der:
+        return {}
+    try:
         import os
         import tempfile
 

@@ -289,12 +289,11 @@ class SqlmapScan(Check):
         if not combined.strip():
             return
         lowered = combined.lower()
-        vulnerable = "is vulnerable" in lowered or "parameter" in lowered and "vulnerable" in lowered
-        if not vulnerable:
+        if "is vulnerable" not in lowered:
             return
         evidence_line = ""
         for line in combined.splitlines():
-            if "vulnerable" in line.lower():
+            if "is vulnerable" in line.lower():
                 evidence_line = line.strip()
                 break
         yield Finding(
@@ -353,19 +352,22 @@ class TlsScan(Check):
             records = json.loads(out)
         except (ValueError, TypeError):
             return
-        if isinstance(records, dict):
-            records = records.get("scanResult") or records.get("findings") or []
         if not isinstance(records, list):
             return
         for record in records:
             if not isinstance(record, dict):
                 continue
             raw_sev = str(record.get("severity", "")).upper()
-            if raw_sev not in ("HIGH", "CRITICAL", "MEDIUM"):
+            if raw_sev not in ("HIGH", "CRITICAL", "MEDIUM", "WARN"):
                 continue
             finding_id = record.get("id") or "tls"
             detail = record.get("finding") or ""
-            severity = Severity.HIGH if raw_sev in ("HIGH", "CRITICAL") else Severity.MEDIUM
+            if raw_sev in ("HIGH", "CRITICAL"):
+                severity = Severity.HIGH
+            elif raw_sev == "MEDIUM":
+                severity = Severity.MEDIUM
+            else:
+                severity = Severity.LOW
             yield Finding(
                 check=self.name,
                 title=f"TLS issue: {finding_id}",

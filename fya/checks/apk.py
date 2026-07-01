@@ -347,52 +347,40 @@ class ApkManifest(Check):
                 references=_MASVS_REF,
             )
 
-    def _permission_guarded_map(self, apk) -> dict:
-        guarded = {}
+    def _exported(self, apk, apk_path):
         try:
             manifest = apk.get_android_manifest_xml()
         except Exception:
-            return guarded
+            manifest = None
         if manifest is None:
-            return guarded
+            return
         android_ns = "http://schemas.android.com/apk/res/android"
-        for tag in ("activity", "activity-alias", "service", "receiver", "provider"):
-            for node in manifest.findall(".//" + tag):
-                name = node.get("{%s}name" % android_ns)
-                if not name:
-                    continue
-                perm = node.get("{%s}permission" % android_ns)
-                guarded[(tag, name)] = bool(perm)
-        return guarded
-
-    def _exported(self, apk, apk_path):
-        guarded = self._permission_guarded_map(apk)
-        getters = (
-            ("activity", getattr(apk, "get_activities", None)),
-            ("service", getattr(apk, "get_services", None)),
-            ("receiver", getattr(apk, "get_receivers", None)),
-            ("provider", getattr(apk, "get_providers", None)),
-        )
+        name_key = "{%s}name" % android_ns
+        exported_key = "{%s}exported" % android_ns
+        permission_key = "{%s}permission" % android_ns
         reported = 0
-        for kind, getter in getters:
-            if not callable(getter):
-                continue
-            try:
-                components = getter() or []
-            except Exception:
-                components = []
-            for component in components:
+        for kind in ("activity", "activity-alias", "service", "receiver", "provider"):
+            for node in manifest.findall(".//" + kind):
                 if reported >= _MAX_MATCHES_PER_PATTERN:
                     return
-                exported = None
-                try:
-                    exported = apk.get_element(kind, "exported", name=component)
-                except Exception:
-                    exported = None
-                if exported is None or not self._bool_attr(exported):
+                component = node.get(name_key)
+                if not component:
                     continue
-                if guarded.get((kind, component)):
+                exported = node.get(exported_key)
+                has_intent_filter = node.find("intent-filter") is not None
+                if exported is not None:
+                    if not self._bool_attr(exported):
+                        continue
+                elif not has_intent_filter:
                     continue
+                if node.get(permission_key):
+                    continue
+                if exported is not None:
+                    reason = "android:exported=true"
+                    evidence = f"{kind} {component} exported=true, no permission"
+                else:
+                    reason = "an intent-filter and no explicit android:exported, so it is exported by default"
+                    evidence = f"{kind} {component} exported by default via intent-filter, no permission"
                 reported += 1
                 yield Finding(
                     check=self.name,
@@ -401,12 +389,12 @@ class ApkManifest(Check):
                     confidence=Confidence.MEDIUM,
                     category="MASVS-PLATFORM",
                     cwe="CWE-926",
-                    description=f"The {kind} '{component}' is exported (android:exported=true) with no "
+                    description=f"The {kind} '{component}' has {reason} and no "
                     "permission requirement, so other apps on the device can invoke it directly.",
                     remediation="Set android:exported to false if external access is not required, or "
                     "protect the component with a signature-level permission.",
                     location="AndroidManifest.xml",
-                    evidence=f"{kind} {component} exported=true, no permission",
+                    evidence=evidence,
                     references=_MASVS_REF,
                 )
 

@@ -5,8 +5,6 @@
   &nbsp;F&#42;ck Your App
 </h1>
 
-### `fya`
-
 **Point it at your app. It tries to break it.**
 
 A dynamic, target-adaptive security scanner for localhost servers and Android APKs.
@@ -61,7 +59,8 @@ instead of reinventing them.
 - **One tool, two targets.** Scan a running web server or an Android `.apk` with the same command.
 - **Adaptive.** Detects the stack, tunes payloads and request pacing, and runs only the checks that apply.
 - **You pick the mode.** Choose `recon`, `web`, `api`, `mobile`, or `full` (or an interactive menu), and watch a live per-category progress animation as it runs.
-- **29 checks, OWASP-mapped.** Web, API, TLS, and APK static analysis, each tagged to OWASP Top 10 / MASVS and CWE.
+- **Fits real apps and CI.** Authenticated scans (`--header`/`--cookie`/`--bearer`), scope and request-budget controls, an optional headless-browser crawler for single-page apps, and a baseline file to suppress known findings.
+- **36 checks, OWASP-mapped.** Web, API, TLS, and APK static analysis, each tagged to OWASP Top 10 / MASVS and CWE.
 - **Orchestrates, does not reinvent.** Uses Nuclei, Nikto, sqlmap, nmap, and testssl when present; falls back to built-in checks when not.
 - **Safe by default.** Non-destructive, no flooding, request pacing that backs off on errors, localhost allowed, remote requires explicit authorization.
 - **CI-ready reports.** Console, JSON, SARIF, Markdown, and self-contained HTML, with `--fail-on` exit codes.
@@ -72,6 +71,7 @@ instead of reinventing them.
 ```bash
 pip install fya                 # from PyPI
 pip install "fya[apk]"          # add Android APK manifest analysis (androguard)
+pip install "fya[browser]"      # add the headless-browser crawler for SPAs (playwright)
 ```
 
 From a clone, with test tooling:
@@ -82,7 +82,14 @@ cd fya
 pip install -e ".[dev]"
 ```
 
-Python 3.9 or newer.
+Python 3.9 or newer. The core install pulls only `requests` and `rich`; APK, browser, and dev tooling are optional extras.
+
+Or run it in Docker (the image bundles nmap):
+
+```bash
+docker build -t fya .
+docker run --rm --network host fya scan http://127.0.0.1:8000
+```
 
 ## Quickstart
 
@@ -100,6 +107,15 @@ fya scan http://127.0.0.1:8000 --mode web              # web + tls + api
 fya scan http://127.0.0.1:8000 --mode full             # everything, aggressive
 fya scan http://127.0.0.1:8000 --interactive           # menu to pick mode + profile
 fya modes                                               # list the modes
+
+# authenticated and scoped, with a request budget
+fya scan http://127.0.0.1:8000 -H "Authorization: Bearer $TOKEN" --exclude '/logout' --max-requests 500
+fya scan http://127.0.0.1:8000 --cookie "session=abc123"
+fya scan http://127.0.0.1:8000 --spa                    # render JS/SPA pages (needs the [browser] extra)
+
+# baseline for CI: record once, then fail only on new findings
+fya scan http://127.0.0.1:8000 --write-baseline .fya-baseline.json
+fya scan http://127.0.0.1:8000 --baseline .fya-baseline.json --fail-on high
 
 # analyze an Android app
 fya scan ./app-release.apk
@@ -138,7 +154,7 @@ adapts automatically, slowing down on errors, timeouts, and slow responses.
 
 ## What it checks
 
-29 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE.
+36 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE.
 Full catalog in [docs/checks.md](docs/checks.md).
 
 | Area           | Checks |
@@ -146,6 +162,7 @@ Full catalog in [docs/checks.md](docs/checks.md).
 | Web (passive)  | Security headers, server/version disclosure, insecure cookie flags |
 | Web (active)   | Reflected XSS, error-based SQLi, open redirect, path traversal, CORS misconfiguration, dangerous HTTP methods, sensitive file exposure |
 | Web (advanced) | Server-side template injection (SSTI), missing CSRF token, Host header injection, CRLF/header injection |
+| Web (hardening) | CSP policy weaknesses, JWT (alg / expiry / sensitive claims), outdated JS libraries, security.txt and robots.txt |
 | TLS           | Certificate validity and trust, weak protocol versions, missing HTTP to HTTPS upgrade |
 | API           | OpenAPI/Swagger exposure, GraphQL introspection, verbose error disclosure, unauthenticated admin/debug endpoints |
 | APK (static)  | Hardcoded secrets, cleartext HTTP endpoints, manifest issues (debuggable, backup, exported components, cleartext, minSdk, permissions) |

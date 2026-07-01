@@ -60,7 +60,33 @@ arithmetic payload across common template engines and matching the product in
 the response. `web.csrf` flags state-changing POST forms that carry no anti-CSRF
 token field. `web.host_header` sends a spoofed Host header and reports when it is
 reflected in the body, a redirect, or an absolute link. `web.crlf` injects an
-encoded CR LF to detect response header injection.
+encoded CR LF to detect response header injection. `web.csrf` runs at Confidence
+LOW and skips forms whose page carries a meta csrf-token or a SameSite cookie.
+`web.ssti` uses a pre-injection baseline and two distinct factor pairs to avoid
+coincidental matches.
+
+## Web hardening
+
+Passive best-practice and configuration checks. Minimum profile: `passive`.
+
+| Check | Severity | OWASP / MASVS | CWE |
+|-------|----------|---------------|-----|
+| `web.csp_weaknesses` | low - medium | A05:2021 Security Misconfiguration | CWE-693 |
+| `web.jwt_weak_algorithm` | low - high | A02:2021 Cryptographic Failures | CWE-347 |
+| `web.jwt_missing_expiry` | low | A07:2021 Identification and Authentication Failures | CWE-613 |
+| `web.jwt_sensitive_claims` | medium | A02:2021 Cryptographic Failures | CWE-522 |
+| `web.frontend_libraries` | info - medium | A06:2021 Vulnerable and Outdated Components | CWE-1104 |
+| `web.security_txt` | info | A05:2021 Security Misconfiguration | (none) |
+| `web.robots_sensitive_paths` | low | A05:2021 Security Misconfiguration | CWE-200 |
+
+Notes: `web.csp_weaknesses` parses an existing Content-Security-Policy and flags
+unsafe-inline, unsafe-eval, wildcard and data: sources, and missing object-src or
+base-uri (it complements the missing-CSP check in web passive). The `web.jwt_*`
+checks passively decode JSON Web Tokens the app exposes without verifying the
+signature, flagging the none algorithm, a missing exp claim, and sensitive claims.
+`web.frontend_libraries` reads script URLs and flags outdated major versions of
+common libraries. `web.security_txt` notes when no security.txt is published, and
+`web.robots_sensitive_paths` flags sensitive paths disclosed in robots.txt.
 
 ## TLS
 

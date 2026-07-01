@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from ..models import Confidence, Finding, Profile, ScanContext, Severity, TargetKind
 from ..registry import Check, register
@@ -27,13 +28,43 @@ _INTROSPECTION_QUERY = {
     "query": "query{__schema{queryType{name}}}"
 }
 
-_ERROR_SIGNATURES = [
+_SPECIFIC_SIGNATURES = [
     "Traceback (most recent call last)",
     "Werkzeug Debugger",
-    "at java.",
     "NullPointerException",
+]
+
+_FRAMED_SIGNATURES = [
+    "at java.",
     "syntax error at line",
 ]
+
+_STACK_FRAME_RE = re.compile(r"(?:\bat\s+\S+\([^)]*\)|\bat\s+[\w.$]+\.[\w$]+\()")
+_FILE_PATH_RE = re.compile(r"(?:[A-Za-z]:\\|/)[\w.\\/-]+\.\w+")
+_LINE_FRAME_RE = re.compile(r"line\s+\d+", re.IGNORECASE)
+_AT_FRAME_RE = re.compile(r"\bat\s+\S")
+
+
+def _has_stack_framing(body: str) -> bool:
+    if _STACK_FRAME_RE.search(body):
+        return True
+    if _FILE_PATH_RE.search(body):
+        return True
+    if len(_AT_FRAME_RE.findall(body)) >= 2:
+        return True
+    if _LINE_FRAME_RE.search(body) and _FILE_PATH_RE.search(body):
+        return True
+    return False
+
+
+def _match_signature(body: str) -> str:
+    for sig in _SPECIFIC_SIGNATURES:
+        if sig in body:
+            return sig
+    for sig in _FRAMED_SIGNATURES:
+        if sig in body and _has_stack_framing(body):
+            return sig
+    return ""
 
 
 def _join(base: str, path: str) -> str:
@@ -167,13 +198,17 @@ class VerboseErrorDisclosure(Check):
         ]
         targets = [base, _join(base, "/api")]
         for url in targets:
+            baseline = ctx.http.get(url)
+            baseline_body = (baseline.text or "") if baseline is not None else ""
             for label, sender in probes:
                 response = sender(url)
                 if response is None:
                     continue
                 body = response.text or ""
-                matched = next((sig for sig in _ERROR_SIGNATURES if sig in body), None)
+                matched = _match_signature(body)
                 if not matched:
+                    continue
+                if matched in baseline_body:
                     continue
                 dedupe_key = matched
                 if dedupe_key in seen:

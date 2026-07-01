@@ -34,6 +34,23 @@ def register(cls: Type[Check]) -> Type[Check]:
     return cls
 
 
+def _load_plugins() -> None:
+    try:
+        from importlib.metadata import entry_points
+    except ImportError:
+        return
+    try:
+        eps = entry_points()
+        selected = eps.select(group="fya.checks") if hasattr(eps, "select") else eps.get("fya.checks", [])
+    except Exception:
+        return
+    for ep in selected:
+        try:
+            ep.load()
+        except Exception:
+            continue
+
+
 def discover() -> None:
     global _DISCOVERED
     if _DISCOVERED:
@@ -42,6 +59,7 @@ def discover() -> None:
 
     for module in pkgutil.iter_modules(checks_pkg.__path__):
         importlib.import_module(f"{checks_pkg.__name__}.{module.name}")
+    _load_plugins()
     _DISCOVERED = True
 
 

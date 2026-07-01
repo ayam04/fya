@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fya"
-version = "0.2.1"
+version = "0.3.0"
 description = "Point it at your app, it tries to break it. A dynamic security scanner for localhost servers and Android APKs."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -27,7 +27,7 @@ dependencies = [
 [project.optional-dependencies]
 apk = ["androguard>=4.0"]
 browser = ["playwright>=1.40"]
-dev = ["pytest>=7.4", "ruff>=0.4", "flask>=3.0"]
+dev = ["pytest>=7.4", "pytest-cov>=4.1", "ruff>=0.4", "flask>=3.0", "mypy>=1.8", "cryptography>=41", "androguard>=4.0"]
 
 [project.scripts]
 fya = "fya.cli:main"
@@ -51,3 +51,9 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.mypy]
+python_version = "3.9"
+files = ["fya"]
+ignore_missing_imports = true
+warn_redundant_casts = true

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from . import __version__, report
+from . import __version__, baseline, report
 from .authorization import NOTICE, authorize
 from .detect import detect_target
 from .engine import run_scan
@@ -81,6 +81,15 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--timeout", type=float, default=12.0)
     scan.add_argument("--workers", type=int, default=8)
     scan.add_argument("--proxy", help="route web traffic through an HTTP proxy, e.g. http://127.0.0.1:8080")
+    scan.add_argument("--header", "-H", action="append", metavar="'Name: value'", help="extra request header for authenticated scans, repeatable")
+    scan.add_argument("--cookie", help="cookies to send: 'name=value; name2=value2'")
+    scan.add_argument("--bearer", help="shortcut for an Authorization: Bearer <token> header")
+    scan.add_argument("--include", action="append", metavar="REGEX", help="only request paths matching this regex, repeatable")
+    scan.add_argument("--exclude", action="append", metavar="REGEX", help="never request paths matching this regex, repeatable")
+    scan.add_argument("--max-requests", type=int, default=0, help="stop after this many HTTP requests (0 = no cap)")
+    scan.add_argument("--spa", action="store_true", help="render pages with a headless browser to crawl JS/SPA apps (needs the [browser] extra)")
+    scan.add_argument("--baseline", help="suppress findings whose ids are listed in this baseline JSON file")
+    scan.add_argument("--write-baseline", help="write the current findings to this baseline JSON file")
     scan.add_argument("--verify-tls", action="store_true", help="verify TLS certs during crawling (off by default)")
     scan.add_argument("--no-tools", action="store_true", help="skip detection of external tools")
     scan.add_argument("--no-animate", action="store_true", help="disable the live progress animation")
@@ -125,6 +134,24 @@ def _resolve_scope(args) -> tuple[str, set]:
     return profile, categories
 
 
+def _parse_headers(pairs):
+    headers = {}
+    for item in pairs or []:
+        if ":" in item:
+            name, value = item.split(":", 1)
+            headers[name.strip()] = value.strip()
+    return headers
+
+
+def _parse_cookies(raw):
+    cookies = {}
+    for part in (raw or "").split(";"):
+        if "=" in part:
+            name, value = part.split("=", 1)
+            cookies[name.strip()] = value.strip()
+    return cookies
+
+
 def _run_scan(args) -> int:
     from rich.console import Console
 
@@ -149,9 +176,12 @@ def _run_scan(args) -> int:
 
     def log(message: str) -> None:
         if args.verbose:
-            console.print(f"[grey42]· {message}[/]")
+            console.print(f"· {message}", style="grey42", markup=False)
 
     animate = not args.quiet and not args.no_animate
+    extra_headers = _parse_headers(args.header)
+    if args.bearer:
+        extra_headers["Authorization"] = f"Bearer {args.bearer}"
     scan_kwargs = dict(
         profile=Profile(profile),
         options={
@@ -159,6 +189,12 @@ def _run_scan(args) -> int:
             "workers": args.workers,
             "proxy": args.proxy,
             "verify": args.verify_tls,
+            "headers": extra_headers or None,
+            "cookies": _parse_cookies(args.cookie) or None,
+            "include": args.include,
+            "exclude": args.exclude,
+            "max_requests": args.max_requests,
+            "spa": args.spa,
         },
         log=log,
         detect_external=not args.no_tools,
@@ -170,8 +206,16 @@ def _run_scan(args) -> int:
     else:
         result = run_scan(target, **scan_kwargs)
 
+    if args.write_baseline:
+        count = baseline.save(args.write_baseline, result)
+        if not args.quiet:
+            console.print(f"[grey50]baseline written:[/] {args.write_baseline} ({count} findings)")
+    suppressed = baseline.apply(result, baseline.load(args.baseline)) if args.baseline else 0
+
     if not args.quiet:
         report.render_console(result)
+        if suppressed:
+            console.print(f"[grey50]suppressed {suppressed} finding(s) via baseline[/]")
 
     if args.output:
         fmt = args.format

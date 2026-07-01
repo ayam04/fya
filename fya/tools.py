@@ -50,7 +50,7 @@ def run(args: List[str], timeout: float = 120.0, input_text: Optional[str] = Non
             check=False,
         )
         return proc.returncode, proc.stdout, proc.stderr
-    except subprocess.TimeoutExpired:
-        return None, "", "timeout"
+    except subprocess.TimeoutExpired as exc:
+        return None, exc.stdout or "", exc.stderr or "timeout"
     except (OSError, ValueError) as exc:
         return None, "", str(exc)
