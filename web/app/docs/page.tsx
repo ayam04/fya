@@ -9,6 +9,7 @@ export const metadata = {
 const nav = [
   ["install", "Installation"],
   ["quickstart", "Quickstart"],
+  ["skill", "Claude skill"],
   ["targets", "Targets"],
   ["modes", "Scan modes"],
   ["profiles", "Profiles"],
@@ -107,6 +108,24 @@ export default function Docs() {
         <CodeBlock code={"fya scan http://127.0.0.1:8000\nfya scan ./app-release.apk\n\nfya scan http://127.0.0.1:8000 -o report.html   # shareable report\nfya scan http://127.0.0.1:8000 --fail-on high    # exit non-zero in CI\nfya tools                                         # list detectable external tools"} />
         <p className={p + " mt-4"}>Try it against the bundled deliberately-vulnerable app in the repo:</p>
         <CodeBlock code={"python examples/vulnerable_app.py            # starts on http://127.0.0.1:5001\nfya scan http://127.0.0.1:5001 --mode full -o report.html"} />
+
+        <H2 id="skill">The Claude skill</H2>
+        <p className={p}>
+          Prefer to stay in Claude? fya ships as a skill that makes Claude run the same non-destructive scan
+          itself, with no package to install. It confirms you own the target, runs the checks, and reports in the
+          chat.
+        </p>
+        <p className={p}>Install it by copying one folder into your Claude skills directory:</p>
+        <CodeBlock code={"git clone https://github.com/ayam04/fya\ncp -r fya/skills/fya ~/.claude/skills/fya"} />
+        <p className={p + " mt-4"}>
+          On Windows the destination is <Code>%USERPROFILE%\.claude\skills\fya</Code>. Then just ask Claude:
+        </p>
+        <CodeBlock code={"scan http://localhost:3000 for vulnerabilities\ncheck ./app-release.apk for security issues"} />
+        <p className={p + " mt-4"}>
+          Claude confirms the target and authorization, picks a mode and profile, runs the OWASP-mapped checks, and
+          applies the same false-positive discipline as the CLI. It is fully agentic: it drives the probes with its
+          own tools, so it works even where the package is not installed.
+        </p>
 
         <H2 id="targets">Targets</H2>
         <p className={p}>
