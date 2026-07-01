@@ -5,13 +5,13 @@ import threading
 import zipfile
 
 from rich.console import Console
+from vulnerable_app import create_app
 from werkzeug.serving import make_server
 
 from fya import report
 from fya.detect import detect_target
 from fya.engine import run_scan
 from fya.models import Profile
-from vulnerable_app import create_app
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.join(HERE, "..", "docs")
