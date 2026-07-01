@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+
+report.html
+/*.sarif
+fya_report.*
