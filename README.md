@@ -1,6 +1,19 @@
-# fya
+<div align="center">
+
+# F\*ck Your App
+
+### `fya`
 
 **Point it at your app. It tries to break it.**
+
+[![CI](https://github.com/ayam04/fya/actions/workflows/ci.yml/badge.svg)](https://github.com/ayam04/fya/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/fya.svg)](https://pypi.org/project/fya/)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+</div>
 
 `fya` is an open-source, dynamic security scanner. Give it a running server
 (localhost or a URL) or an Android `.apk`, and it detects what the target is,
@@ -14,6 +27,15 @@ apkleaks) instead of reinventing them.
 > authorized in writing to test. Scanning targets that are not local requires
 > the `--i-am-authorized` flag. Unauthorized scanning may be illegal. You are
 > responsible for how you use this tool.
+
+## Highlights
+
+- **One tool, two targets.** Scan a running web server or an Android `.apk` with the same command.
+- **Adaptive.** Detects the stack, tunes payloads and request pacing, and runs only the checks that apply.
+- **25 checks, OWASP-mapped.** Web, API, TLS, and APK static analysis, each tagged to OWASP Top 10 / MASVS and CWE.
+- **Orchestrates, does not reinvent.** Uses Nuclei, Nikto, sqlmap, nmap, and testssl when present; falls back to built-in checks when not.
+- **Safe by default.** Non-destructive, no flooding, localhost allowed, remote requires explicit authorization.
+- **CI-ready reports.** Console, JSON, SARIF, Markdown, and self-contained HTML, with `--fail-on` exit codes.
 
 ## Demo
 
