@@ -3,7 +3,8 @@ import { Callout } from "@/components/Callout"
 
 export const metadata = {
   title: "fya docs - usage and reference",
-  description: "Install fya, scan a web server or an APK, pick a mode and profile, run authenticated and scoped scans, gate CI with a baseline, and read the full check catalog.",
+  description:
+    "Install fya, scan a web server or an APK, run it as a Claude skill, pick a mode and profile, run authenticated and scoped scans, gate CI with a baseline, and read the full check catalog.",
 }
 
 const nav = [
@@ -57,27 +58,30 @@ const checks = [
 ]
 
 function Code({ children }: { children: React.ReactNode }) {
-  return <code className="rounded bg-code px-1.5 py-0.5 font-mono text-[13px] text-ink">{children}</code>
+  return <code className="rounded bg-white/[0.07] px-1.5 py-0.5 font-mono text-[13px] text-ink">{children}</code>
 }
 
 function H2({ id, children }: { id: string; children: string }) {
   return (
-    <h2 id={id} className="mt-16 mb-4 scroll-mt-24 border-b border-line pb-2 text-2xl font-semibold tracking-tight">
+    <h2 id={id} className="font-display mt-16 mb-4 scroll-mt-28 border-b border-line pb-2 text-2xl font-semibold tracking-tight">
       {children}
     </h2>
   )
 }
 
-const p = "mb-4 text-[15px] leading-relaxed text-ink/90"
+const p = "mb-4 text-[15px] leading-relaxed text-ink/80"
+const th = "py-2 pr-6 text-left font-medium text-muted"
+const td = "py-2.5 align-top text-ink/80"
+const mono = "py-2.5 pr-6 align-top font-mono text-[13px] text-brand2"
 
 export default function Docs() {
   return (
-    <div className="mx-auto grid max-w-5xl gap-10 px-5 py-12 lg:grid-cols-[220px_1fr]">
+    <div className="mx-auto grid max-w-5xl gap-10 px-5 pb-16 pt-28 lg:grid-cols-[210px_1fr]">
       <aside className="hidden lg:block">
-        <nav className="sticky top-24 space-y-1 text-sm">
+        <nav className="sticky top-24 space-y-0.5 text-sm">
           <div className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">Documentation</div>
           {nav.map(([id, label]) => (
-            <a key={id} href={`#${id}`} className="block rounded-md px-2.5 py-1.5 text-muted transition hover:bg-code hover:text-ink">
+            <a key={id} href={`#${id}`} className="block rounded-md px-2.5 py-1.5 text-muted transition-colors hover:bg-white/5 hover:text-ink">
               {label}
             </a>
           ))}
@@ -85,15 +89,12 @@ export default function Docs() {
       </aside>
 
       <article className="min-w-0 max-w-3xl">
-        <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
-        <p className="mt-3 text-lg text-muted">
-          Everything to install fya, scan your app, and wire it into CI.
-        </p>
+        <h1 className="font-display text-4xl font-semibold tracking-tight">Documentation</h1>
+        <p className="mt-3 text-lg text-muted">Everything to install fya, scan your app, and wire it into CI.</p>
         <div className="mt-6">
           <Callout tone="warn">
-            fya performs active security testing. Only scan systems you own or are explicitly authorized in
-            writing to test. Any non-local target requires{" "}
-            <code className="rounded bg-white px-1 font-mono text-[13px]">--i-am-authorized</code>.
+            fya performs active security testing. Only scan systems you own or are explicitly authorized in writing
+            to test. Any non-local target requires <Code>--i-am-authorized</Code>.
           </Callout>
         </div>
 
@@ -130,30 +131,22 @@ export default function Docs() {
         <H2 id="targets">Targets</H2>
         <p className={p}>
           fya detects the target automatically. A path ending in <Code>.apk</Code> (or any zip containing an
-          AndroidManifest) is analyzed statically. Anything else is treated as a web target; a bare host defaults
-          to <Code>http</Code> for localhost and private addresses and <Code>https</Code> otherwise.
+          AndroidManifest) is analyzed statically. Anything else is a web target; a bare host defaults to{" "}
+          <Code>http</Code> for localhost and private addresses and <Code>https</Code> otherwise.
         </p>
 
         <H2 id="modes">Scan modes</H2>
         <p className={p}>
-          A mode selects which family of checks runs. Pick one with <Code>--mode</Code>, refine with
-          <Code>--only</Code> and <Code>--skip</Code>, or choose from a menu with <Code>--interactive</Code>.
-          List them with <Code>fya modes</Code>.
+          A mode selects which family of checks runs. Pick one with <Code>--mode</Code>, refine with{" "}
+          <Code>--only</Code> and <Code>--skip</Code>, or choose from a menu with <Code>--interactive</Code>. List
+          them with <Code>fya modes</Code>.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-muted">
-                <th className="py-2 pr-6 font-medium">Mode</th>
-                <th className="py-2 font-medium">What it runs</th>
-              </tr>
-            </thead>
+            <thead><tr className="border-b border-line"><th className={th}>Mode</th><th className={th + " pr-0"}>What it runs</th></tr></thead>
             <tbody>
               {modes.map(([m, d]) => (
-                <tr key={m} className="border-b border-line">
-                  <td className="py-2.5 pr-6 align-top font-mono text-[13px] text-brand-ink">{m}</td>
-                  <td className="py-2.5 text-ink/90">{d}</td>
-                </tr>
+                <tr key={m} className="border-b border-line"><td className={mono}>{m}</td><td className={td}>{d}</td></tr>
               ))}
             </tbody>
           </table>
@@ -161,66 +154,40 @@ export default function Docs() {
 
         <H2 id="profiles">Profiles</H2>
         <p className={p}>
-          A profile sets how hard fya probes, independent of the mode. Request pacing adapts automatically and
-          slows down on errors, timeouts, and slow responses. fya never floods a target or runs denial-of-service
+          A profile sets how hard fya probes, independent of the mode. Request pacing adapts automatically and slows
+          down on errors, timeouts, and slow responses. fya never floods a target or runs denial-of-service
           payloads.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-muted">
-                <th className="py-2 pr-6 font-medium">Profile</th>
-                <th className="py-2 font-medium">Behavior</th>
-              </tr>
-            </thead>
+            <thead><tr className="border-b border-line"><th className={th}>Profile</th><th className={th + " pr-0"}>Behavior</th></tr></thead>
             <tbody>
               {profiles.map(([m, d]) => (
-                <tr key={m} className="border-b border-line">
-                  <td className="py-2.5 pr-6 align-top font-mono text-[13px] text-brand-ink">{m}</td>
-                  <td className="py-2.5 text-ink/90">{d}</td>
-                </tr>
+                <tr key={m} className="border-b border-line"><td className={mono}>{m}</td><td className={td}>{d}</td></tr>
               ))}
             </tbody>
           </table>
         </div>
 
         <H2 id="auth">Authentication and scope</H2>
-        <p className={p}>
-          Scan behind a login by passing session credentials, and keep the scan inside a boundary with scope and
-          budget controls.
-        </p>
+        <p className={p}>Scan behind a login, and keep the scan inside a boundary with scope and budget controls.</p>
         <CodeBlock code={"# authenticated\nfya scan https://staging.example.com --i-am-authorized \\\n  -H \"Authorization: Bearer $TOKEN\"\nfya scan http://127.0.0.1:8000 --cookie \"session=abc123\"\n\n# scope and budget\nfya scan http://127.0.0.1:8000 --include '/app' --exclude '/logout'\nfya scan http://127.0.0.1:8000 --max-requests 500\n\n# render JS and single-page apps (needs the [browser] extra)\nfya scan http://127.0.0.1:8000 --spa"} />
-        <p className={p + " mt-4"}>
-          Any non-local target requires <Code>--i-am-authorized</Code>. <Code>--include</Code> and
-          <Code>--exclude</Code> take path regexes, and <Code>--max-requests</Code> caps total HTTP requests.
-        </p>
 
         <H2 id="baseline">Baseline and CI</H2>
-        <p className={p}>
-          Record the findings you have accepted, then fail the build only on new ones. This keeps
-          <Code>--fail-on</Code> useful in a pipeline without drowning in known issues.
-        </p>
-        <CodeBlock code={"# record once\nfya scan http://127.0.0.1:8000 --write-baseline .fya-baseline.json\n\n# in CI: suppress the baseline, fail only on new high findings\nfya scan http://127.0.0.1:8000 --baseline .fya-baseline.json --fail-on high"} />
+        <p className={p}>Record the findings you have accepted, then fail the build only on new ones.</p>
+        <CodeBlock code={"fya scan http://127.0.0.1:8000 --write-baseline .fya-baseline.json\nfya scan http://127.0.0.1:8000 --baseline .fya-baseline.json --fail-on high"} />
 
         <H2 id="reports">Reports</H2>
         <p className={p}>
-          Format is inferred from the <Code>-o</Code> extension, or set it with <Code>--format</Code>. Use
-          <Code>--fail-on {"{low,medium,high,critical}"}</Code> to return a non-zero exit code.
+          Format is inferred from the <Code>-o</Code> extension, or set it with <Code>--format</Code>. Use{" "}
+          <Code>--fail-on</Code> to return a non-zero exit code.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-muted">
-                <th className="py-2 pr-6 font-medium">Format</th>
-                <th className="py-2 font-medium">Use it for</th>
-              </tr>
-            </thead>
+            <thead><tr className="border-b border-line"><th className={th}>Format</th><th className={th + " pr-0"}>Use it for</th></tr></thead>
             <tbody>
               {reports.map(([m, d]) => (
-                <tr key={m} className="border-b border-line">
-                  <td className="py-2.5 pr-6 align-top font-mono text-[13px] text-brand-ink">{m}</td>
-                  <td className="py-2.5 text-ink/90">{d}</td>
-                </tr>
+                <tr key={m} className="border-b border-line"><td className={mono}>{m}</td><td className={td}>{d}</td></tr>
               ))}
             </tbody>
           </table>
@@ -228,19 +195,19 @@ export default function Docs() {
 
         <H2 id="checks">Checks catalog</H2>
         <p className={p}>
-          36 checks across eight areas, each mapped to the OWASP Top 10 or MASVS and a CWE. Every check runs only
-          at or above its minimum profile.
+          36 checks across eight areas, each mapped to the OWASP Top 10 or MASVS and a CWE. Every check runs only at
+          or above its minimum profile.
         </p>
         <div className="space-y-4">
           {checks.map(([area, prof, names]) => (
-            <div key={area as string} className="rounded-xl border border-line p-5">
+            <div key={area as string} className="rounded-xl border border-line bg-surface/40 p-5">
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h3 className="text-base font-semibold">{area}</h3>
                 <span className="font-mono text-xs text-muted">min profile: {prof}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {(names as string[]).map((n) => (
-                  <span key={n} className="rounded-md border border-line bg-code px-2 py-1 font-mono text-[12px] text-ink/80">
+                  <span key={n} className="rounded-md border border-line bg-white/[0.03] px-2 py-1 font-mono text-[12px] text-ink/75">
                     {n}
                   </span>
                 ))}
@@ -251,9 +218,8 @@ export default function Docs() {
 
         <H2 id="tools">External tools</H2>
         <p className={p}>
-          If any of these are on your <Code>PATH</Code>, fya runs them and folds their results into one
-          normalized report. If not, it falls back to built-in checks. Check what is detected with
-          <Code>fya tools</Code>.
+          If any of these are on your <Code>PATH</Code>, fya runs them and folds their results into one normalized
+          report. If not, it falls back to built-in checks. Check what is detected with <Code>fya tools</Code>.
         </p>
         <p className={p}>
           <Code>nuclei</Code> <Code>nikto</Code> <Code>sqlmap</Code> <Code>nmap</Code> <Code>testssl.sh</Code>{" "}
@@ -266,10 +232,10 @@ export default function Docs() {
 
         <H2 id="responsible">Responsible use</H2>
         <p className={p}>
-          fya performs active security testing. Only scan systems you own or are explicitly authorized in writing
-          to test. Scanning a target that is not local requires <Code>--i-am-authorized</Code>. Scans are
-          non-destructive by default, with no flooding and no denial-of-service payloads. You are responsible for
-          how you use this tool.
+          fya performs active security testing. Only scan systems you own or are explicitly authorized in writing to
+          test. Scanning a non-local target requires <Code>--i-am-authorized</Code>. Scans are non-destructive by
+          default, with no flooding and no denial-of-service payloads. You are responsible for how you use this
+          tool.
         </p>
       </article>
     </div>
