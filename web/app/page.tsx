@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { CodeBlock } from "@/components/CodeBlock"
+import { Mark } from "@/components/Mark"
+import { Callout } from "@/components/Callout"
 
 const features = [
   {
@@ -51,10 +53,10 @@ const areas = [
 export default function Home() {
   return (
     <>
-      <section id="overview" className="mx-auto max-w-6xl px-5 pt-16 pb-14 sm:pt-24">
+      <section id="overview" className="mx-auto max-w-5xl px-5 pt-16 pb-14 sm:pt-24">
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-7 inline-flex items-center gap-2.5">
-            <img src="/icon.svg" alt="" width={46} height={46} className="rounded-xl" />
+            <Mark size={46} className="rounded-xl" />
             <span className="text-2xl font-semibold tracking-tight">
               fya<span className="text-brand">_</span>
             </span>
@@ -96,7 +98,7 @@ export default function Home() {
       </section>
 
       <section className="border-y border-line bg-code/60">
-        <div className="mx-auto grid max-w-6xl gap-5 px-5 py-14 md:grid-cols-2">
+        <div className="mx-auto grid max-w-5xl gap-5 px-5 py-14 md:grid-cols-2">
           <div className="rounded-xl border border-line bg-white p-6">
             <div className="text-xs font-medium uppercase tracking-wide text-muted">Web server</div>
             <p className="mt-2 mb-4 text-sm text-muted">Scan a running app on localhost or a URL you own.</p>
@@ -110,7 +112,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 py-20">
+      <section className="mx-auto max-w-5xl px-5 py-20">
         <h2 className="text-2xl font-semibold tracking-tight">Why fya</h2>
         <div className="mt-8 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
@@ -123,7 +125,7 @@ export default function Home() {
       </section>
 
       <section className="border-t border-line bg-code/60">
-        <div className="mx-auto max-w-6xl px-5 py-20">
+        <div className="mx-auto max-w-5xl px-5 py-20">
           <h2 className="text-2xl font-semibold tracking-tight">How it adapts per target</h2>
           <ol className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {steps.map(([title, body], i) => (
@@ -139,7 +141,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 py-20">
+      <section className="mx-auto max-w-5xl px-5 py-20">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h2 className="text-2xl font-semibold tracking-tight">What it checks</h2>
           <Link href="/docs#checks" className="text-sm text-brand hover:text-brand-ink">
@@ -162,10 +164,12 @@ export default function Home() {
       <section className="border-t border-line">
         <div className="mx-auto max-w-3xl px-5 py-20 text-center">
           <h2 className="text-3xl font-semibold tracking-tight">Break your app before someone else does.</h2>
-          <p className="mx-auto mt-4 max-w-xl text-muted">
-            Non-destructive by default. Localhost is allowed out of the box, and any remote target needs an
-            explicit authorization flag.
-          </p>
+          <div className="mx-auto mt-6 max-w-lg text-left">
+            <Callout tone="warn">
+              Non-destructive by default. Localhost is allowed out of the box; any remote target needs an explicit{" "}
+              <code className="rounded bg-white px-1 font-mono text-[13px]">--i-am-authorized</code> flag. Test only what you own.
+            </Callout>
+          </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link href="/docs" className="rounded-lg bg-brand px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-ink">
               Get started

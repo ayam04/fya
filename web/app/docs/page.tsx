@@ -1,4 +1,5 @@
 import { CodeBlock } from "@/components/CodeBlock"
+import { Callout } from "@/components/Callout"
 
 export const metadata = {
   title: "fya docs - usage and reference",
@@ -70,7 +71,7 @@ const p = "mb-4 text-[15px] leading-relaxed text-ink/90"
 
 export default function Docs() {
   return (
-    <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 lg:grid-cols-[220px_1fr]">
+    <div className="mx-auto grid max-w-5xl gap-10 px-5 py-12 lg:grid-cols-[220px_1fr]">
       <aside className="hidden lg:block">
         <nav className="sticky top-24 space-y-1 text-sm">
           <div className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">Documentation</div>
@@ -85,9 +86,15 @@ export default function Docs() {
       <article className="min-w-0 max-w-3xl">
         <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
         <p className="mt-3 text-lg text-muted">
-          Everything to install fya, scan your app, and wire it into CI. Only scan systems you own or are
-          explicitly authorized to test.
+          Everything to install fya, scan your app, and wire it into CI.
         </p>
+        <div className="mt-6">
+          <Callout tone="warn">
+            fya performs active security testing. Only scan systems you own or are explicitly authorized in
+            writing to test. Any non-local target requires{" "}
+            <code className="rounded bg-white px-1 font-mono text-[13px]">--i-am-authorized</code>.
+          </Callout>
+        </div>
 
         <H2 id="install">Installation</H2>
         <p className={p}>fya needs Python 3.9 or newer. The core install pulls only requests and rich.</p>

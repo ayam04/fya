@@ -1,12 +1,13 @@
 import Link from "next/link"
+import { Mark } from "@/components/Mark"
 
 export function Nav() {
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-white/85 backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+    <header className="sticky top-0 z-30 border-b border-line bg-white/80 backdrop-blur-md">
+      <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
         <Link href="/" className="flex items-center gap-2.5">
-          <img src="/icon.svg" alt="" width={28} height={28} className="rounded-md" />
-          <span className="text-[17px] font-semibold tracking-tight">
+          <Mark size={26} className="rounded-md" />
+          <span className="text-[16px] font-semibold tracking-tight">
             fya<span className="text-brand">_</span>
           </span>
         </Link>
@@ -22,7 +23,7 @@ export function Nav() {
           </a>
           <a
             href="https://github.com/ayam04/fya"
-            className="ml-1.5 rounded-md bg-ink px-3.5 py-1.5 text-white transition hover:bg-black"
+            className="ml-1.5 rounded-md border border-line px-3.5 py-1.5 font-medium text-ink transition hover:border-ink/20 hover:bg-code"
           >
             GitHub
           </a>

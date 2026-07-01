@@ -2,11 +2,11 @@
 
 @theme {
   --color-brand: #ff4d4d;
-  --color-brand-ink: #e03a3a;
-  --color-ink: #24211c;
-  --color-muted: #6b6a66;
-  --color-line: #ebe9e4;
-  --color-code: #f6f5f2;
+  --color-brand-ink: #e0403f;
+  --color-ink: #37352f;
+  --color-muted: #787774;
+  --color-line: #e9e8e4;
+  --color-code: #f7f6f3;
   --font-sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Menlo, Consolas, monospace;
 }
