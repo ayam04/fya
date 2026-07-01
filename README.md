@@ -1,6 +1,9 @@
 <div align="center">
 
-# F\*ck Your App
+<h1>
+  <img src="https://raw.githubusercontent.com/ayam04/fya/main/assets/icon.png" width="72" valign="middle" alt="fya"/>
+  &nbsp;F&#42;ck Your App
+</h1>
 
 ### `fya`
 
@@ -17,7 +20,7 @@ A dynamic, target-adaptive security scanner for localhost servers and Android AP
 
 <br/>
 
-![fya breaking a vulnerable web app](docs/demo.gif)
+<img src="https://raw.githubusercontent.com/ayam04/fya/main/docs/demo.gif" alt="fya breaking a vulnerable web app" width="880"/>
 
 </div>
 
@@ -150,7 +153,9 @@ Full catalog in [docs/checks.md](docs/checks.md).
 
 <div align="center">
 
-![fya analyzing an Android APK](docs/demo-apk-scan.svg)
+<img src="https://raw.githubusercontent.com/ayam04/fya/main/docs/demo-web-scan.svg" alt="fya web scan report" width="900"/>
+
+<img src="https://raw.githubusercontent.com/ayam04/fya/main/docs/demo-apk-scan.svg" alt="fya apk scan report" width="900"/>
 
 </div>
 

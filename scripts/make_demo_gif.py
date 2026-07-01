@@ -16,40 +16,58 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.join(HERE, "..", "docs")
 PORT = 5098
 
-W, H = 960, 640
-PAD = 28
-LH = 30
-TITLE_H = 46
-FONT = ImageFont.truetype("C:/Windows/Fonts/consola.ttf", 20)
-BOLD = ImageFont.truetype("C:/Windows/Fonts/consolab.ttf", 20)
+MARGIN = 22
+RADIUS = 13
+TITLE_H = 40
+PAD_X = 26
+PAD_TOP = 16
+PAD_BOTTOM = 16
+LH = 27
+WIN_W = 900
 
-BG = (13, 16, 23)
-BAR = (22, 27, 36)
+FONT = ImageFont.truetype("C:/Windows/Fonts/consola.ttf", 19)
+BOLD = ImageFont.truetype("C:/Windows/Fonts/consolab.ttf", 19)
+
+BACKDROP = (6, 8, 12)
+WIN = (13, 16, 23)
+BORDER = (32, 38, 48)
+TITLEBAR = (18, 22, 30)
 DOTS = [(255, 95, 86), (255, 189, 46), (39, 201, 63)]
-INK = (201, 209, 217)
-GREY = (138, 148, 166)
+TITLE_TXT = (120, 130, 148)
 GREEN = (63, 185, 80)
+GREY = (138, 148, 166)
+INK = (201, 209, 217)
+CURSOR = (201, 209, 217)
 CYAN = (77, 184, 255)
 SEV = {"critical": (255, 77, 77), "high": (255, 77, 77), "medium": (245, 179, 1), "low": (77, 184, 255), "info": (138, 148, 166)}
 
-
-def _text(draw, x, y, segments):
-    for content, color, bold in segments:
-        font = BOLD if bold else FONT
-        draw.text((x, y), content, font=font, fill=color)
-        x += draw.textlength(content, font=font)
+TITLE = f"ayam@fya: fya scan  -  127.0.0.1:{PORT}"
 
 
-def _frame(rows):
-    img = Image.new("RGB", (W, H), BG)
+def render(rows, canvas_h):
+    W = WIN_W + 2 * MARGIN
+    img = Image.new("RGB", (W, canvas_h), BACKDROP)
     draw = ImageDraw.Draw(img)
-    draw.rectangle([0, 0, W, TITLE_H], fill=BAR)
+    wx, wy = MARGIN, MARGIN
+    ww, wh = WIN_W, canvas_h - 2 * MARGIN
+    draw.rounded_rectangle([wx, wy, wx + ww, wy + wh], radius=RADIUS, fill=WIN, outline=BORDER, width=1)
+    draw.rounded_rectangle(
+        [wx, wy, wx + ww, wy + TITLE_H], radius=RADIUS, corners=(True, True, False, False), fill=TITLEBAR
+    )
+    draw.line([wx, wy + TITLE_H, wx + ww, wy + TITLE_H], fill=BORDER, width=1)
     for i, color in enumerate(DOTS):
-        draw.ellipse([PAD + i * 26, 17, PAD + i * 26 + 12, 29], fill=color)
-    draw.text((W / 2 - 20, 13), "fya", font=BOLD, fill=GREY)
-    y = TITLE_H + 18
+        cx = wx + 20 + i * 22
+        draw.ellipse([cx, wy + 14, cx + 12, wy + 26], fill=color)
+    tw = draw.textlength(TITLE, font=FONT)
+    draw.text((wx + (ww - tw) / 2, wy + 11), TITLE, font=FONT, fill=TITLE_TXT)
+
+    y = wy + TITLE_H + PAD_TOP
     for row in rows:
-        _text(draw, PAD, y, row)
+        x = wx + PAD_X
+        for content, color, bold in row:
+            font = BOLD if bold else FONT
+            draw.text((x, y), content, font=font, fill=color)
+            x += draw.textlength(content, font=font)
         y += LH
     return img
 
@@ -59,66 +77,66 @@ def _bar(done, total, width=20):
     return "█" * filled + "░" * (width - filled)
 
 
+def _prompt(cmd, cursor):
+    segs = [("ayam@fya", GREEN, True), (":~$ ", GREY, False), (cmd, INK, False)]
+    if cursor:
+        segs.append(("█", CURSOR, False))
+    return segs
+
+
 def build(result):
-    frames, durations = [], []
-    cmd = f"$ fya scan http://127.0.0.1:{PORT} --mode full"
-    status = [
-        [("authorized: ", GREY, False), ("local target 127.0.0.1", INK, False), ("   mode ", GREY, False), ("full", INK, True), ("  profile ", GREY, False), ("aggressive", INK, True)],
-    ]
+    cmd = f"fya scan http://127.0.0.1:{PORT} --mode full"
+    status = [("authorized ", GREY, False), ("local 127.0.0.1", INK, False), ("   mode ", GREY, False), ("full", INK, True), ("  profile ", GREY, False), ("aggressive", INK, True)]
 
     totals = Counter(n.split(".")[0] for n in result.checks_run)
     found_by = Counter(f.check.split(".")[0] for f in result.findings)
     cats = [c for c in ("web", "tls", "api", "apk", "integrations") if c in totals]
 
-    def prompt_row(text, cursor=True):
-        segs = [(text, GREEN if text.startswith("$") else INK, True)]
-        if cursor:
-            segs.append((" █", (255, 77, 77), False))
-        return segs
-
+    data = []
     for i in range(0, len(cmd) + 1, 2):
-        frames.append(_frame([prompt_row(cmd[:i])]))
-        durations.append(45)
-    frames.append(_frame([prompt_row(cmd, cursor=False)] + [[("", INK, False)]] + status))
-    durations.append(500)
+        data.append(([_prompt(cmd[:i], True)], 45))
+    data.append(([_prompt(cmd, False), [], status], 450))
 
     steps = 14
     for s in range(1, steps + 1):
-        rows = [prompt_row(cmd, cursor=False), [("", INK, False)]] + status + [[("", INK, False)]]
+        rows = [_prompt(cmd, False), [], status, []]
         for cat in cats:
             total = totals[cat]
             done = min(total, int(round(total * s / steps)))
             fnd = int(round(found_by[cat] * done / total)) if total else 0
             label = "tools" if cat == "integrations" else cat
             rows.append([
-                (f"{label:<6} ", INK, True),
+                (f"  {label:<6}", INK, True),
                 (_bar(done, total), CYAN if done < total else GREEN, False),
                 (f"  {done}/{total}", GREY, False),
                 (f"   {fnd} found", GREY, False),
             ])
-        frames.append(_frame(rows))
-        durations.append(110)
+        data.append((rows, 110))
 
     counts = result.counts()
-    summary = [("findings: ", GREY, False)]
+    summary = [("findings  ", GREY, False)]
     for sev in ("critical", "high", "medium", "low", "info"):
         if counts[sev]:
             summary.append((f"{counts[sev]} {sev}  ", SEV[sev], True))
     ordered = result.sorted_findings()[:7]
-    header = [prompt_row(cmd, cursor=False), [("", INK, False)], summary, [("", INK, False)]]
+    header = [_prompt(cmd, False), [], summary, []]
     for n in range(len(ordered) + 1):
         rows = list(header)
         for f in ordered[:n]:
-            rows.append([
-                (f"  {f.severity.value:<8}", SEV[f.severity.value], True),
-                (f.title[:58], INK, False),
-            ])
-        frames.append(_frame(rows))
-        durations.append(200)
+            rows.append([(f"  {f.severity.value:<8}", SEV[f.severity.value], True), (f.title[:56], INK, False)])
+        data.append((rows, 190))
 
-    dur = list(durations)
-    dur[-1] = 3200
-    return frames, dur
+    done_rows = list(header)
+    for f in ordered:
+        done_rows.append([(f"  {f.severity.value:<8}", SEV[f.severity.value], True), (f.title[:56], INK, False)])
+    done_rows += [[], [("ayam@fya", GREEN, True), (":~$ ", GREY, False)]]
+    blink_on = [r for r in done_rows]
+    blink_on[-1] = blink_on[-1] + [("█", CURSOR, False)]
+    for _ in range(3):
+        data.append((blink_on, 500))
+        data.append((done_rows, 500))
+    data[-1] = (blink_on, 2600)
+    return data
 
 
 def main():
@@ -136,18 +154,15 @@ def main():
     finally:
         server.shutdown()
 
-    frames, durations = build(result)
+    data = build(result)
+    max_rows = max(len(rows) for rows, _ in data)
+    canvas_h = 2 * MARGIN + TITLE_H + PAD_TOP + max_rows * LH + PAD_BOTTOM
+    frames = [render(rows, canvas_h) for rows, _ in data]
+    durations = [d for _, d in data]
+
     out = os.path.join(DOCS, "demo.gif")
-    frames[0].save(
-        out,
-        save_all=True,
-        append_images=frames[1:],
-        duration=durations,
-        loop=0,
-        optimize=True,
-    )
-    total = sum(1 for _ in frames)
-    print(f"wrote {os.path.relpath(out, os.path.join(HERE, '..'))} ({total} frames, {os.path.getsize(out)//1024} KB)")
+    frames[0].save(out, save_all=True, append_images=frames[1:], duration=durations, loop=0, optimize=True)
+    print(f"wrote {os.path.relpath(out, os.path.join(HERE, '..'))} ({len(frames)} frames, {canvas_h}px tall, {os.path.getsize(out)//1024} KB)")
 
 
 if __name__ == "__main__":
