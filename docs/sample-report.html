@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fya report: http://127.0.0.1:5099</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0d1017;color:#c9d1d9;font:15px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.wrap{max-width:960px;margin:0 auto;padding:32px 20px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:#8a94a6;font-size:13px;margin-bottom:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 28px}
+.chip{border:1px solid #30363d;border-radius:999px;padding:4px 12px;font-size:13px}
+.chip.ok{color:#3fb950;border-color:#238636}
+.card{border:1px solid #21262d;border-radius:10px;padding:16px 18px;margin:0 0 14px;background:#11151d}
+.card header{display:flex;align-items:center;gap:10px}
+.card h3{font-size:15px;margin:0}
+.badge{color:#0d1017;font-weight:700;font-size:11px;text-transform:uppercase;padding:2px 8px;border-radius:5px}
+.meta{color:#8a94a6;font-size:12px;margin:8px 0}
+.rem{background:#0f2417;border:1px solid #1f6f3f;border-radius:6px;padding:8px 12px;margin:10px 0;font-size:13px}
+pre{background:#0a0d13;border:1px solid #21262d;border-radius:6px;padding:12px;overflow-x:auto;font-size:12.5px;color:#9fb0c3}
+.refs{margin-top:10px;display:flex;flex-direction:column;gap:2px}
+.refs a{color:#58a6ff;font-size:12px;text-decoration:none;word-break:break-all}
+footer{color:#565f6b;font-size:12px;margin-top:24px;border-top:1px solid #21262d;padding-top:12px}
+</style></head><body><div class="wrap">
+<h1>fya scan report</h1>
+<div class="sub">http://127.0.0.1:5099 | kind web |
+profile aggressive | 4.1s |
+20 checks</div>
+<div class="chips"><span class="chip" style="border-color:#ff784e;color:#ff784e">4 high</span><span class="chip" style="border-color:#f5b301;color:#f5b301">3 medium</span><span class="chip" style="border-color:#4db8ff;color:#4db8ff">3 low</span><span class="chip" style="border-color:#8a94a6;color:#8a94a6">1 info</span></div>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#ff784e">high</span>
+          <h3>Sensitive file exposed: /.env</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-538
+          | confidence medium | http://127.0.0.1:5099/.env</div>
+        <p>The environment secrets file at /.env is served publicly and returned HTTP 200 with plausible content, potentially leaking secrets, source, or infrastructure details.</p>
+        <div class="rem"><b>Fix.</b> Block access to dotfiles, VCS metadata, backups, and config from the web root. Serve only intended public assets.</div>
+        <pre>HTTP 200, 44 bytes, content-type: text/plain; charset=utf-8</pre>
+        <div class="refs"><a href="https://owasp.org/www-project-web-security-testing-guide/" target="_blank" rel="noopener">https://owasp.org/www-project-web-security-testing-guide/</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#ff784e">high</span>
+          <h3>SQL injection via parameter &#x27;id&#x27;</h3>
+        </header>
+        <div class="meta">A03:2021 Injection | CWE CWE-89
+          | confidence medium | http://127.0.0.1:5099/user?id=1 [param: id]</div>
+        <p>Appending a quote character to this parameter produced a database error signature in the response, indicating input is concatenated into a SQL statement.</p>
+        <div class="rem"><b>Fix.</b> Use parameterized queries or prepared statements. Never build SQL by string concatenation and suppress verbose database errors.</div>
+        <pre>error signature: unrecognized token</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/attacks/SQL_Injection" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/SQL_Injection</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#ff784e">high</span>
+          <h3>Reflected XSS via parameter &#x27;q&#x27;</h3>
+        </header>
+        <div class="meta">A03:2021 Injection | CWE CWE-79
+          | confidence high | http://127.0.0.1:5099/search?q=phone [param: q]</div>
+        <p>A unique probe injected into this parameter was reflected in the HTML response without encoding, so attacker-controlled markup executes in the victim browser.</p>
+        <div class="rem"><b>Fix.</b> Contextually encode all user input on output and apply a strict Content-Security-Policy. Prefer framework auto-escaping.</div>
+        <pre>reflected unescaped: &amp;lt;fya&amp;gt;fya8446f9908643&amp;lt;/fya&amp;gt;</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/attacks/xss/" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/xss/</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#ff784e">high</span>
+          <h3>CORS reflects arbitrary origin with credentials</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-942
+          | confidence high | http://127.0.0.1:5099/cors</div>
+        <p>The response reflects an attacker-supplied Origin into Access-Control-Allow-Origin while also allowing credentials, letting a malicious site read authenticated responses.</p>
+        <div class="rem"><b>Fix.</b> Validate Origin against a strict server-side allowlist and never combine a wildcard or reflected origin with Access-Control-Allow-Credentials: true.</div>
+        <pre>Access-Control-Allow-Origin: https://evil.example; Access-Control-Allow-Credentials: true</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#f5b301">medium</span>
+          <h3>Open redirect via parameter &#x27;url&#x27;</h3>
+        </header>
+        <div class="meta">A01:2021 Broken Access Control | CWE CWE-601
+          | confidence high | http://127.0.0.1:5099/go?url=/ [param: url]</div>
+        <p>This parameter controls the redirect target without validation, so an attacker can send victims to an arbitrary external site for phishing.</p>
+        <div class="rem"><b>Fix.</b> Redirect only to a server-side allowlist of paths or hosts. Reject absolute external URLs supplied by the client.</div>
+        <pre>Location: https://fya-oob.example/fyaf5e820b7eb54</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/attacks/Unvalidated_Redirects_and_Forwards_Cheat_Sheet" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/Unvalidated_Redirects_and_Forwards_Cheat_Sheet</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#f5b301">medium</span>
+          <h3>Missing Content-Security-Policy header</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-693
+          | confidence high | http://127.0.0.1:5099</div>
+        <p>No Content-Security-Policy header was returned. CSP is the primary defense-in-depth control against cross-site scripting and data injection in the browser.</p>
+        <div class="rem"><b>Fix.</b> Set a Content-Security-Policy that restricts script and object sources to trusted origins.</div>
+        <pre>response headers: [&#x27;connection&#x27;, &#x27;content-length&#x27;, &#x27;content-type&#x27;, &#x27;date&#x27;, &#x27;server&#x27;, &#x27;set-cookie&#x27;]</pre>
+        <div class="refs"><a href="https://owasp.org/www-project-secure-headers/" target="_blank" rel="noopener">https://owasp.org/www-project-secure-headers/</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#f5b301">medium</span>
+          <h3>Cookie &#x27;session&#x27; missing flags: HttpOnly, SameSite</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-614
+          | confidence high | http://127.0.0.1:5099</div>
+        <p>The cookie &#x27;session&#x27; is set without the HttpOnly, SameSite attribute(s), weakening protection against theft and cross-site request forgery.</p>
+        <div class="rem"><b>Fix.</b> Set Secure, HttpOnly, and SameSite on session and auth cookies.</div>
+        <pre>Set-Cookie: session=...</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/controls/SecureCookieAttribute" target="_blank" rel="noopener">https://owasp.org/www-community/controls/SecureCookieAttribute</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#4db8ff">low</span>
+          <h3>Version disclosed in server header</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-200
+          | confidence high | http://127.0.0.1:5099</div>
+        <p>The server header reveals software and version (Werkzeug/3.1.8 Python/3.12.10), which helps an attacker match the target to known CVEs.</p>
+        <div class="rem"><b>Fix.</b> Suppress or genericize the server header at the server or proxy.</div>
+        <pre>server: Werkzeug/3.1.8 Python/3.12.10</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/Security_Misconfiguration" target="_blank" rel="noopener">https://owasp.org/www-community/Security_Misconfiguration</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#4db8ff">low</span>
+          <h3>Missing clickjacking protection</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-1021
+          | confidence high | http://127.0.0.1:5099</div>
+        <p>Neither X-Frame-Options nor a CSP frame-ancestors directive was found, so the page can be framed by other origins and is exposed to clickjacking.</p>
+        <div class="rem"><b>Fix.</b> Set X-Frame-Options: DENY or a CSP frame-ancestors &#x27;none&#x27; directive.</div>
+        <pre>response headers: [&#x27;connection&#x27;, &#x27;content-length&#x27;, &#x27;content-type&#x27;, &#x27;date&#x27;, &#x27;server&#x27;, &#x27;set-cookie&#x27;]</pre>
+        <div class="refs"><a href="https://owasp.org/www-project-secure-headers/" target="_blank" rel="noopener">https://owasp.org/www-project-secure-headers/</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#4db8ff">low</span>
+          <h3>Missing X-Content-Type-Options header</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-693
+          | confidence high | http://127.0.0.1:5099</div>
+        <p>Responses do not send X-Content-Type-Options: nosniff, allowing browsers to MIME-sniff content and interpret responses as an unintended type.</p>
+        <div class="rem"><b>Fix.</b> Add X-Content-Type-Options: nosniff to all responses.</div>
+        <pre>response headers: [&#x27;connection&#x27;, &#x27;content-length&#x27;, &#x27;content-type&#x27;, &#x27;date&#x27;, &#x27;server&#x27;, &#x27;set-cookie&#x27;]</pre>
+        <div class="refs"><a href="https://owasp.org/www-project-secure-headers/" target="_blank" rel="noopener">https://owasp.org/www-project-secure-headers/</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#8a94a6">info</span>
+          <h3>Missing Referrer-Policy header</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-200
+          | confidence high | http://127.0.0.1:5099</div>
+        <p>No Referrer-Policy header was returned; full URLs may leak to third parties via the Referer header.</p>
+        <div class="rem"><b>Fix.</b> Set Referrer-Policy: no-referrer-when-downgrade or stricter.</div>
+        <pre>response headers: [&#x27;connection&#x27;, &#x27;content-length&#x27;, &#x27;content-type&#x27;, &#x27;date&#x27;, &#x27;server&#x27;, &#x27;set-cookie&#x27;]</pre>
+        <div class="refs"><a href="https://owasp.org/www-project-secure-headers/" target="_blank" rel="noopener">https://owasp.org/www-project-secure-headers/</a></div>
+      </article>
+<footer>Generated by fya. Test only what you own or are authorized to test.</footer>
+</div></body></html>

@@ -31,12 +31,13 @@ _SARIF_LEVEL = {
 }
 
 
-def render_console(result: ScanResult) -> None:
+def render_console(result: ScanResult, console=None) -> None:
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
 
-    console = Console()
+    if console is None:
+        console = Console()
     counts = result.counts()
     summary = "  ".join(
         f"[{_SEV_COLOR[s.value]}]{counts[s.value]} {s.value}[/]"

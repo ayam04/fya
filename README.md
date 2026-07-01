@@ -15,6 +15,22 @@ apkleaks) instead of reinventing them.
 > the `--i-am-authorized` flag. Unauthorized scanning may be illegal. You are
 > responsible for how you use this tool.
 
+## Demo
+
+`fya` breaking the bundled vulnerable app in one run: reflected XSS,
+error-based SQLi, CORS reflecting an arbitrary origin with credentials, an
+open redirect, and an exposed `.env`.
+
+![fya scanning a vulnerable web app](docs/demo-web-scan.svg)
+
+Static analysis of an Android APK, finding a hardcoded AWS key and cleartext
+endpoints:
+
+![fya analyzing an APK](docs/demo-apk-scan.svg)
+
+Regenerate these locally with `python examples/demo.py`. A full HTML report is
+saved to [`docs/sample-report.html`](docs/sample-report.html).
+
 ## Install
 
 ```bash
