@@ -17,6 +17,9 @@ def run_scan(
     options: Optional[dict] = None,
     log: Optional[Callable[[str], None]] = None,
     detect_external: bool = True,
+    categories: Optional[set] = None,
+    on_plan: Optional[Callable] = None,
+    on_check_done: Optional[Callable] = None,
 ) -> ScanResult:
     options = dict(options or {})
     result = ScanResult(target=target, profile=profile)
@@ -51,7 +54,12 @@ def run_scan(
             result.errors.append("target did not respond to the initial request")
 
     checks = applicable_checks(ctx)
+    if categories:
+        allowed = set(categories)
+        checks = [c for c in checks if c.name.split(".")[0] in allowed]
     result.checks_run = sorted(c.name for c in checks)
+    if on_plan:
+        on_plan(list(checks))
     log(f"running {len(checks)} checks at profile={profile.value}")
 
     max_workers = int(options.get("workers", 8))
@@ -67,20 +75,25 @@ def run_scan(
         futures = [pool.submit(_run_one, c) for c in checks]
         for future in as_completed(futures):
             name, findings, error = future.result()
+            category = name.split(".")[0]
+            count = 0
             if error:
                 result.errors.append(f"{name}: {error.strip().splitlines()[-1]}")
                 log(f"check {name} failed")
-                continue
-            for finding in findings:
-                if not isinstance(finding, Finding):
-                    continue
-                if not finding.target:
-                    finding.target = target.label()
-                fkey = finding.key()
-                if fkey in seen:
-                    continue
-                seen.add(fkey)
-                result.findings.append(finding)
+            else:
+                for finding in findings:
+                    if not isinstance(finding, Finding):
+                        continue
+                    if not finding.target:
+                        finding.target = target.label()
+                    fkey = finding.key()
+                    if fkey in seen:
+                        continue
+                    seen.add(fkey)
+                    result.findings.append(finding)
+                    count += 1
+            if on_check_done:
+                on_check_done(name, category, count)
 
     if http is not None:
         result.tool_versions["_requests"] = str(http.request_count)

@@ -4,6 +4,7 @@ import html
 import json
 from typing import Optional
 
+from . import __version__
 from .models import ScanResult, Severity
 
 _SEV_COLOR = {
@@ -120,7 +121,7 @@ def to_sarif(result: ScanResult) -> str:
                     "driver": {
                         "name": "fya",
                         "informationUri": "https://github.com/ayam04/fya",
-                        "version": "0.1.0",
+                        "version": __version__,
                         "rules": list(rules.values()),
                     }
                 },

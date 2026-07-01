@@ -17,7 +17,7 @@ A dynamic, target-adaptive security scanner for localhost servers and Android AP
 
 <br/>
 
-![fya breaking a vulnerable web app](docs/demo-web-scan.svg)
+![fya breaking a vulnerable web app](docs/demo.gif)
 
 </div>
 
@@ -57,7 +57,8 @@ instead of reinventing them.
 
 - **One tool, two targets.** Scan a running web server or an Android `.apk` with the same command.
 - **Adaptive.** Detects the stack, tunes payloads and request pacing, and runs only the checks that apply.
-- **25 checks, OWASP-mapped.** Web, API, TLS, and APK static analysis, each tagged to OWASP Top 10 / MASVS and CWE.
+- **You pick the mode.** Choose `recon`, `web`, `api`, `mobile`, or `full` (or an interactive menu), and watch a live per-category progress animation as it runs.
+- **29 checks, OWASP-mapped.** Web, API, TLS, and APK static analysis, each tagged to OWASP Top 10 / MASVS and CWE.
 - **Orchestrates, does not reinvent.** Uses Nuclei, Nikto, sqlmap, nmap, and testssl when present; falls back to built-in checks when not.
 - **Safe by default.** Non-destructive, no flooding, request pacing that backs off on errors, localhost allowed, remote requires explicit authorization.
 - **CI-ready reports.** Console, JSON, SARIF, Markdown, and self-contained HTML, with `--fail-on` exit codes.
@@ -90,6 +91,12 @@ fya scan http://127.0.0.1:8000
 fya scan http://127.0.0.1:8000 --profile passive
 fya scan http://127.0.0.1:8000 --profile safe          # default
 fya scan http://127.0.0.1:8000 --profile aggressive
+
+# pick what to run, or choose from a menu
+fya scan http://127.0.0.1:8000 --mode web              # web + tls + api
+fya scan http://127.0.0.1:8000 --mode full             # everything, aggressive
+fya scan http://127.0.0.1:8000 --interactive           # menu to pick mode + profile
+fya modes                                               # list the modes
 
 # analyze an Android app
 fya scan ./app-release.apk
@@ -128,13 +135,14 @@ adapts automatically, slowing down on errors, timeouts, and slow responses.
 
 ## What it checks
 
-25 checks across six areas, each mapped to OWASP Top 10 / MASVS and a CWE. Full
-catalog in [docs/checks.md](docs/checks.md).
+29 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE.
+Full catalog in [docs/checks.md](docs/checks.md).
 
-| Area          | Checks |
-|---------------|--------|
-| Web (passive) | Security headers, server/version disclosure, insecure cookie flags |
-| Web (active)  | Reflected XSS, error-based SQLi, open redirect, path traversal, CORS misconfiguration, dangerous HTTP methods, sensitive file exposure |
+| Area           | Checks |
+|----------------|--------|
+| Web (passive)  | Security headers, server/version disclosure, insecure cookie flags |
+| Web (active)   | Reflected XSS, error-based SQLi, open redirect, path traversal, CORS misconfiguration, dangerous HTTP methods, sensitive file exposure |
+| Web (advanced) | Server-side template injection (SSTI), missing CSRF token, Host header injection, CRLF/header injection |
 | TLS           | Certificate validity and trust, weak protocol versions, missing HTTP to HTTPS upgrade |
 | API           | OpenAPI/Swagger exposure, GraphQL introspection, verbose error disclosure, unauthenticated admin/debug endpoints |
 | APK (static)  | Hardcoded secrets, cleartext HTTP endpoints, manifest issues (debuggable, backup, exported components, cleartext, minSdk, permissions) |

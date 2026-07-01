@@ -25,9 +25,22 @@ footer{color:#565f6b;font-size:12px;margin-top:24px;border-top:1px solid #21262d
 </style></head><body><div class="wrap">
 <h1>fya scan report</h1>
 <div class="sub">http://127.0.0.1:5099 | kind web |
-profile aggressive | 4.1s |
-20 checks</div>
-<div class="chips"><span class="chip" style="border-color:#ff784e;color:#ff784e">4 high</span><span class="chip" style="border-color:#f5b301;color:#f5b301">3 medium</span><span class="chip" style="border-color:#4db8ff;color:#4db8ff">3 low</span><span class="chip" style="border-color:#8a94a6;color:#8a94a6">1 info</span></div>
+profile aggressive | 6.5s |
+24 checks</div>
+<div class="chips"><span class="chip" style="border-color:#ff784e;color:#ff784e">7 high</span><span class="chip" style="border-color:#f5b301;color:#f5b301">5 medium</span><span class="chip" style="border-color:#4db8ff;color:#4db8ff">3 low</span><span class="chip" style="border-color:#8a94a6;color:#8a94a6">1 info</span></div>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#ff784e">high</span>
+          <h3>Server-Side Template Injection via parameter &#x27;name&#x27;</h3>
+        </header>
+        <div class="meta">A03:2021 Injection | CWE CWE-1336
+          | confidence high | http://127.0.0.1:5099/greet?name=world [param: name]</div>
+        <p>A template expression injected into parameter &#x27;name&#x27; was evaluated by the server. The product 49660049 appeared in the response but the literal payload did not, confirming server-side evaluation. Engine hint: jinja2/twig/django.</p>
+        <div class="rem"><b>Fix.</b> Never pass user input to template rendering functions. Use template variables with auto-escaping and sandboxed template engines where dynamic template construction is needed.</div>
+        <pre>payload: {{7919*6271}}, evaluated product: 49660049 found in response</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/attacks/Server_Side_Template_Injection" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/Server_Side_Template_Injection</a><a href="https://cwe.mitre.org/data/definitions/1336.html" target="_blank" rel="noopener">https://cwe.mitre.org/data/definitions/1336.html</a></div>
+      </article>
 
       <article class="card">
         <header>
@@ -64,8 +77,34 @@ profile aggressive | 4.1s |
           | confidence high | http://127.0.0.1:5099/search?q=phone [param: q]</div>
         <p>A unique probe injected into this parameter was reflected in the HTML response without encoding, so attacker-controlled markup executes in the victim browser.</p>
         <div class="rem"><b>Fix.</b> Contextually encode all user input on output and apply a strict Content-Security-Policy. Prefer framework auto-escaping.</div>
-        <pre>reflected unescaped: &amp;lt;fya&amp;gt;fya8446f9908643&amp;lt;/fya&amp;gt;</pre>
+        <pre>reflected unescaped: &amp;lt;fya&amp;gt;fya1da20be8c5cd&amp;lt;/fya&amp;gt;</pre>
         <div class="refs"><a href="https://owasp.org/www-community/attacks/xss/" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/xss/</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#ff784e">high</span>
+          <h3>Reflected XSS via parameter &#x27;name&#x27;</h3>
+        </header>
+        <div class="meta">A03:2021 Injection | CWE CWE-79
+          | confidence high | http://127.0.0.1:5099/greet?name=world [param: name]</div>
+        <p>A unique probe injected into this parameter was reflected in the HTML response without encoding, so attacker-controlled markup executes in the victim browser.</p>
+        <div class="rem"><b>Fix.</b> Contextually encode all user input on output and apply a strict Content-Security-Policy. Prefer framework auto-escaping.</div>
+        <pre>reflected unescaped: &amp;lt;fya&amp;gt;fya1c5e70799ba3&amp;lt;/fya&amp;gt;</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/attacks/xss/" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/xss/</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#ff784e">high</span>
+          <h3>CRLF injection via parameter &#x27;lang&#x27;</h3>
+        </header>
+        <div class="meta">A03:2021 Injection | CWE CWE-93
+          | confidence high | http://127.0.0.1:5099/setheader?lang=en [param: lang]</div>
+        <p>A CR LF sequence injected into parameter &#x27;lang&#x27; caused the server to emit an attacker-controlled response header (&#x27;Fya-Test: fya3341886fa529&#x27;). This enables HTTP response splitting, cache poisoning, and cookie injection.</p>
+        <div class="rem"><b>Fix.</b> Strip or reject CR (\r) and LF (\n) characters from any value that flows into response headers. Use framework abstractions that handle header encoding.</div>
+        <pre>injected header Fya-Test: fya3341886fa529</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/attacks/HTTP_Response_Splitting" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/HTTP_Response_Splitting</a><a href="https://cwe.mitre.org/data/definitions/93.html" target="_blank" rel="noopener">https://cwe.mitre.org/data/definitions/93.html</a></div>
       </article>
 
       <article class="card">
@@ -90,7 +129,7 @@ profile aggressive | 4.1s |
           | confidence high | http://127.0.0.1:5099/go?url=/ [param: url]</div>
         <p>This parameter controls the redirect target without validation, so an attacker can send victims to an arbitrary external site for phishing.</p>
         <div class="rem"><b>Fix.</b> Redirect only to a server-side allowlist of paths or hosts. Reject absolute external URLs supplied by the client.</div>
-        <pre>Location: https://fya-oob.example/fyaf5e820b7eb54</pre>
+        <pre>Location: https://fya-oob.example/fya007a8793a84e</pre>
         <div class="refs"><a href="https://owasp.org/www-community/attacks/Unvalidated_Redirects_and_Forwards_Cheat_Sheet" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/Unvalidated_Redirects_and_Forwards_Cheat_Sheet</a></div>
       </article>
 
@@ -110,6 +149,19 @@ profile aggressive | 4.1s |
       <article class="card">
         <header>
           <span class="badge" style="background:#f5b301">medium</span>
+          <h3>Host header injection: spoofed Host reflected in response</h3>
+        </header>
+        <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-644
+          | confidence medium | http://127.0.0.1:5099/link</div>
+        <p>The application reflects the HTTP Host header value into its response without validation. An attacker can poison password-reset links, cache entries, or absolute URLs by supplying a crafted Host header.</p>
+        <div class="rem"><b>Fix.</b> Maintain a server-side allowlist of valid hostnames. Never use the request Host header to construct absolute URLs or links.</div>
+        <pre>reflected in response body; reflected in absolute link: http://fyaa18d9c9f2894.evil.example/</pre>
+        <div class="refs"><a href="https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_Host_Header_Injection" target="_blank" rel="noopener">https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_Host_Header_Injection</a><a href="https://cwe.mitre.org/data/definitions/644.html" target="_blank" rel="noopener">https://cwe.mitre.org/data/definitions/644.html</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#f5b301">medium</span>
           <h3>Cookie &#x27;session&#x27; missing flags: HttpOnly, SameSite</h3>
         </header>
         <div class="meta">A05:2021 Security Misconfiguration | CWE CWE-614
@@ -118,6 +170,19 @@ profile aggressive | 4.1s |
         <div class="rem"><b>Fix.</b> Set Secure, HttpOnly, and SameSite on session and auth cookies.</div>
         <pre>Set-Cookie: session=...</pre>
         <div class="refs"><a href="https://owasp.org/www-community/controls/SecureCookieAttribute" target="_blank" rel="noopener">https://owasp.org/www-community/controls/SecureCookieAttribute</a></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <span class="badge" style="background:#f5b301">medium</span>
+          <h3>CSRF: POST form at &#x27;http://127.0.0.1:5099/transfer&#x27; has no CSRF token</h3>
+        </header>
+        <div class="meta">A01:2021 Broken Access Control | CWE CWE-352
+          | confidence medium | http://127.0.0.1:5099/transfer</div>
+        <p>A POST form targeting &#x27;http://127.0.0.1:5099/transfer&#x27; contains no hidden input whose name matches known CSRF token field names (csrf, xsrf, _token, authenticity_token, csrfmiddlewaretoken, nonce). Without a token an attacker can forge requests on behalf of authenticated users.</p>
+        <div class="rem"><b>Fix.</b> Add a secret per-session CSRF token to every state-changing form and verify it server-side. Consider the SameSite=Strict cookie attribute as a defence-in-depth measure.</div>
+        <pre>form inputs found: amount</pre>
+        <div class="refs"><a href="https://owasp.org/www-community/attacks/csrf" target="_blank" rel="noopener">https://owasp.org/www-community/attacks/csrf</a><a href="https://cwe.mitre.org/data/definitions/352.html" target="_blank" rel="noopener">https://cwe.mitre.org/data/definitions/352.html</a></div>
       </article>
 
       <article class="card">

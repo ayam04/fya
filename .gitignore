@@ -11,3 +11,5 @@ dist/
 report.html
 /*.sarif
 fya_report.*
+
+assets/_preview.png

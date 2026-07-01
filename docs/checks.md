@@ -43,6 +43,25 @@ sets widen at `aggressive`.
 Notes: `web.dangerous_methods` is medium when `TRACE` is advertised, otherwise
 low. `web.sql_injection` is error-signature based (medium confidence).
 
+## Web advanced
+
+Higher-signal dynamic web checks. Minimum profile: `safe`, except `web.crlf`
+which runs at `aggressive`. Payload sets widen at `aggressive`.
+
+| Check | Severity | OWASP / MASVS | CWE |
+|-------|----------|---------------|-----|
+| `web.ssti` | high | A03:2021 Injection | CWE-1336 |
+| `web.csrf` | medium | A01:2021 Broken Access Control | CWE-352 |
+| `web.host_header` | medium | A05:2021 Security Misconfiguration | CWE-644 |
+| `web.crlf` | high | A03:2021 Injection | CWE-93 |
+
+Notes: `web.ssti` confirms server-side template injection by evaluating an
+arithmetic payload across common template engines and matching the product in
+the response. `web.csrf` flags state-changing POST forms that carry no anti-CSRF
+token field. `web.host_header` sends a spoofed Host header and reports when it is
+reflected in the body, a redirect, or an absolute link. `web.crlf` injects an
+encoded CR LF to detect response header injection.
+
 ## TLS
 
 Certificate and protocol checks over a direct TLS socket. Minimum profile:

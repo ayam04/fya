@@ -11,6 +11,34 @@ from .models import Profile
 
 _EXT_FORMAT = {".json": "json", ".sarif": "sarif", ".md": "markdown", ".html": "html"}
 
+ALL_CATEGORIES = {"web", "tls", "api", "apk", "integrations"}
+
+MODES = {
+    "auto": {"categories": None, "profile": None},
+    "recon": {"categories": {"web", "tls", "apk"}, "profile": "passive"},
+    "web": {"categories": {"web", "tls", "api"}, "profile": None},
+    "api": {"categories": {"api", "web"}, "profile": None},
+    "mobile": {"categories": {"apk"}, "profile": None},
+    "full": {"categories": ALL_CATEGORIES, "profile": "aggressive"},
+}
+
+MODE_DESC = {
+    "auto": "everything that applies to the detected target (default)",
+    "recon": "passive, read-only reconnaissance",
+    "web": "web app: headers, TLS, active web checks, and API",
+    "api": "API surface plus supporting web checks",
+    "mobile": "Android APK static analysis",
+    "full": "everything, aggressive, including external tool handoff",
+}
+
+_CAT_LABEL = {
+    "web": "web",
+    "tls": "tls",
+    "api": "api",
+    "apk": "apk",
+    "integrations": "tools",
+}
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -23,10 +51,24 @@ def build_parser() -> argparse.ArgumentParser:
     scan = sub.add_parser("scan", help="scan a localhost/URL server or an .apk file")
     scan.add_argument("target", help="URL, host:port, or path to an .apk")
     scan.add_argument(
+        "--mode",
+        choices=list(MODES),
+        default="auto",
+        help="which family of checks to run: " + ", ".join(MODES),
+    )
+    scan.add_argument(
+        "--interactive",
+        "-i",
+        action="store_true",
+        help="pick the mode and profile from a menu before scanning",
+    )
+    scan.add_argument("--only", help="comma-separated categories to include (web,tls,api,apk,integrations)")
+    scan.add_argument("--skip", help="comma-separated categories to exclude")
+    scan.add_argument(
         "--profile",
         choices=[p.value for p in Profile],
-        default=Profile.SAFE.value,
-        help="passive: read-only; safe: non-destructive probes (default); aggressive: heavier probes",
+        default=None,
+        help="passive: read-only; safe: non-destructive (default); aggressive: heavier probes",
     )
     scan.add_argument("--output", "-o", help="write a report file (format inferred from extension)")
     scan.add_argument(
@@ -41,12 +83,46 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--proxy", help="route web traffic through an HTTP proxy, e.g. http://127.0.0.1:8080")
     scan.add_argument("--verify-tls", action="store_true", help="verify TLS certs during crawling (off by default)")
     scan.add_argument("--no-tools", action="store_true", help="skip detection of external tools")
+    scan.add_argument("--no-animate", action="store_true", help="disable the live progress animation")
     scan.add_argument("--fail-on", choices=["low", "medium", "high", "critical"], help="exit 2 if a finding at or above this severity is found")
     scan.add_argument("--quiet", "-q", action="store_true")
     scan.add_argument("--verbose", "-v", action="store_true")
 
     sub.add_parser("tools", help="list external security tools fya can use")
+    sub.add_parser("modes", help="list the available scan modes")
     return parser
+
+
+def _pick_interactive(console, args) -> None:
+    from rich.prompt import Prompt
+    from rich.table import Table
+
+    table = Table(title="scan modes", border_style="grey37", header_style="bold")
+    table.add_column("mode")
+    table.add_column("what it runs", style="grey62")
+    for name, desc in MODE_DESC.items():
+        table.add_row(name, desc)
+    console.print(table)
+    args.mode = Prompt.ask("mode", choices=list(MODES), default=args.mode or "auto")
+    default_profile = MODES[args.mode]["profile"] or args.profile or Profile.SAFE.value
+    args.profile = Prompt.ask(
+        "profile", choices=[p.value for p in Profile], default=default_profile
+    )
+
+
+def _resolve_scope(args) -> tuple[str, set]:
+    mode = MODES[args.mode]
+    profile = args.profile or mode["profile"] or Profile.SAFE.value
+
+    categories = mode["categories"]
+    if args.only:
+        categories = {c.strip() for c in args.only.split(",") if c.strip()}
+    if args.skip:
+        base = set(categories) if categories else set(ALL_CATEGORIES)
+        categories = base - {c.strip() for c in args.skip.split(",") if c.strip()}
+    if categories is not None and set(categories) == ALL_CATEGORIES:
+        categories = None
+    return profile, categories
 
 
 def _run_scan(args) -> int:
@@ -60,16 +136,24 @@ def _run_scan(args) -> int:
         console.print(f"[red]refusing to scan:[/] {reason}")
         console.print(f"[grey50]{NOTICE}[/]")
         return 1
+
+    if args.interactive and sys.stdin.isatty():
+        _pick_interactive(console, args)
+    profile, categories = _resolve_scope(args)
+
     if not args.quiet:
-        console.print(f"[grey50]authorized:[/] {reason}")
+        console.print(
+            f"[grey50]authorized:[/] {reason}    "
+            f"[grey50]mode[/] [bold]{args.mode}[/]    [grey50]profile[/] [bold]{profile}[/]"
+        )
 
     def log(message: str) -> None:
         if args.verbose:
             console.print(f"[grey42]· {message}[/]")
 
-    result = run_scan(
-        target,
-        profile=Profile(args.profile),
+    animate = not args.quiet and not args.no_animate
+    scan_kwargs = dict(
+        profile=Profile(profile),
         options={
             "timeout": args.timeout,
             "workers": args.workers,
@@ -78,7 +162,13 @@ def _run_scan(args) -> int:
         },
         log=log,
         detect_external=not args.no_tools,
+        categories=categories,
     )
+
+    if animate:
+        result = _run_animated(console, target, scan_kwargs)
+    else:
+        result = run_scan(target, **scan_kwargs)
 
     if not args.quiet:
         report.render_console(result)
@@ -98,6 +188,49 @@ def _run_scan(args) -> int:
     return report.exit_code(result, args.fail_on)
 
 
+def _run_animated(console, target, scan_kwargs):
+    from collections import Counter
+
+    from rich.progress import (
+        BarColumn,
+        MofNCompleteColumn,
+        Progress,
+        SpinnerColumn,
+        TextColumn,
+    )
+
+    progress = Progress(
+        SpinnerColumn(style="red"),
+        TextColumn("[bold]{task.fields[label]:<6}"),
+        BarColumn(bar_width=22, complete_style="cyan", finished_style="green"),
+        MofNCompleteColumn(),
+        TextColumn("[grey62]{task.fields[found]} found"),
+        console=console,
+        transient=True,
+    )
+    tasks = {}
+    found = {}
+
+    def on_plan(checks):
+        per = Counter(c.name.split(".")[0] for c in checks)
+        for cat, total in sorted(per.items()):
+            found[cat] = 0
+            tasks[cat] = progress.add_task(
+                "", total=total, label=_CAT_LABEL.get(cat, cat), found=0
+            )
+
+    def on_check_done(name, category, n):
+        found[category] = found.get(category, 0) + n
+        if category in tasks:
+            progress.advance(tasks[category])
+            progress.update(tasks[category], found=found[category])
+
+    with progress:
+        return run_scan(
+            target, on_plan=on_plan, on_check_done=on_check_done, **scan_kwargs
+        )
+
+
 def _list_tools() -> int:
     from rich.console import Console
 
@@ -114,6 +247,20 @@ def _list_tools() -> int:
     return 0
 
 
+def _list_modes() -> int:
+    from rich.console import Console
+    from rich.table import Table
+
+    console = Console()
+    table = Table(title="fya scan modes", border_style="grey37", header_style="bold")
+    table.add_column("mode")
+    table.add_column("what it runs", style="grey62")
+    for name, desc in MODE_DESC.items():
+        table.add_row(name, desc)
+    console.print(table)
+    return 0
+
+
 def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -124,6 +271,8 @@ def main(argv=None) -> int:
             return 130
     if args.command == "tools":
         return _list_tools()
+    if args.command == "modes":
+        return _list_modes()
     parser.print_help()
     return 0
 
