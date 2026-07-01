@@ -1,0 +1,27 @@
+name: guard-web
+
+on: pull_request
+
+jobs:
+  block:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject PR changes to web/
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE" "$HEAD" -- web/ || true)
+          if [ -n "$changed" ] && [ "$AUTHOR" != "ayam04" ]; then
+            echo "This pull request modifies the web/ folder, which is maintained by the"
+            echo "project owner and is not open to outside contributions."
+            echo "Changed files:"
+            echo "$changed"
+            echo "Please open an issue describing the website change instead."
+            exit 1
+          fi
+          echo "ok: no unauthorized web/ changes"

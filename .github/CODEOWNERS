@@ -1,0 +1,3 @@
+# The website is maintained by the project owner and is not open to outside
+# contributions. Pull requests that touch it are rejected by the guard-web check.
+/web/ @ayam04

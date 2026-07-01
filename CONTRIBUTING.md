@@ -5,6 +5,13 @@ welcome. New checks should be small, mapped to OWASP and CWE, and
 non-destructive by default. Please read [SECURITY.md](SECURITY.md) before adding
 anything that sends probes to a target.
 
+## The website is off-limits
+
+The `web/` folder (the Next.js site) is maintained by the project owner and is
+not open to outside contributions. A required `guard-web` check fails any pull
+request that changes files under `web/`. To suggest a website change, open an
+issue describing it instead.
+
 ## Development setup
 
 `fya` targets Python 3.9 and above. Its core dependencies are just `requests`
@@ -42,7 +49,7 @@ ruff check .
 ```
 
 Ruff is configured in `pyproject.toml` with a 100 character line length and the
-`E`, `F`, `I`, `UP`, and `B` rule sets (with `E501` ignored). Run both `pytest`
+`E`, `F`, `I`, and `B` rule sets (with `E501` ignored). Run both `pytest`
 and `ruff check .` before you submit a pull request.
 
 ## Trying a change against the bundled vulnerable app
@@ -150,5 +157,6 @@ and `ruff check .` before opening the pull request.
 - The change is small and focused.
 - New checks are non-destructive and set an appropriate `min_profile`.
 - Findings carry a `category` (OWASP or MASVS) and a `cwe` where one applies.
+- The change does not modify `web/` (owner-maintained, blocked on pull requests).
 - `pytest` passes.
 - `ruff check .` is clean.
