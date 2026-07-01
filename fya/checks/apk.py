@@ -59,6 +59,18 @@ _DANGEROUS_PERMISSIONS = {
 _MASVS_REF = ["https://mas.owasp.org/MASVS/", "https://mas.owasp.org/MASTG/"]
 
 
+def _silence_androguard() -> None:
+    import logging
+
+    logging.getLogger("androguard").setLevel(logging.ERROR)
+    try:
+        from loguru import logger
+
+        logger.disable("androguard")
+    except Exception:
+        pass
+
+
 def _decode(data: bytes) -> str:
     return data.decode("utf-8", "ignore")
 
@@ -223,6 +235,8 @@ class ApkManifest(Check):
             return
         try:
             from androguard.core.apk import APK
+
+            _silence_androguard()
         except ImportError:
             yield Finding(
                 check=self.name,
