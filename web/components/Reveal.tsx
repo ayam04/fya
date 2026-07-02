@@ -16,7 +16,10 @@ export function Reveal({
 
   useEffect(() => {
     const el = ref.current
-    if (!el) return
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setShown(true)
+      return
+    }
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -27,7 +30,11 @@ export function Reveal({
       { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
     )
     io.observe(el)
-    return () => io.disconnect()
+    const failSafe = setTimeout(() => setShown(true), 1800)
+    return () => {
+      io.disconnect()
+      clearTimeout(failSafe)
+    }
   }, [])
 
   return (

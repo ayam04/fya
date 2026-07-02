@@ -1,64 +1,51 @@
 import Link from "next/link"
+import { Target, Lightning, ShieldCheck, MagnifyingGlass, Key, TerminalWindow } from "@phosphor-icons/react/dist/ssr"
 import { CodeBlock } from "@/components/CodeBlock"
 import { Callout } from "@/components/Callout"
 import { Reveal } from "@/components/Reveal"
 
-const icon = "h-5 w-5"
-
 const features = [
   {
-    svg: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={icon}>
-        <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4" /><path d="M12 1v3M12 20v3M1 12h3M20 12h3" />
-      </svg>
-    ),
+    Icon: Target,
+    span: "md:col-span-2",
+    tint: false,
     title: "One tool, two targets",
-    body: "A running web server or an Android .apk, same command. It works out which one it is and runs only what fits.",
+    body: "A running web server or an Android .apk, same command. It works out which and runs only what fits.",
   },
   {
-    svg: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={icon}>
-        <path d="M13 2 3 14h7l-1 8 10-12h-7z" />
-      </svg>
-    ),
+    Icon: Lightning,
+    span: "md:col-span-4",
+    tint: true,
     title: "It actually breaks things",
     body: "Reflected XSS, SQLi, SSTI, open redirects, path traversal, CORS holes, a leaking .env, a debuggable APK. If it is there, you get the request that proves it.",
   },
   {
-    svg: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={icon}>
-        <path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z" /><path d="M9 12l2 2 4-4" />
-      </svg>
-    ),
+    Icon: ShieldCheck,
+    span: "md:col-span-3",
+    tint: false,
     title: "36 checks, no guesswork",
     body: "Every finding maps to the OWASP Top 10 or MASVS and a CWE, with a fix. No vague risk scores, no filler.",
   },
   {
-    svg: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={icon}>
-        <path d="M22 12a10 10 0 1 1-6.6-9.4" /><path d="M12 12l6-3" /><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
-      </svg>
-    ),
+    Icon: MagnifyingGlass,
+    span: "md:col-span-3",
+    tint: false,
     title: "It does not cry wolf",
     body: "Baselines, context-aware reflection, and honest severity. A confident wrong finding is worse than a missed one, so it earns every flag.",
   },
   {
-    svg: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={icon}>
-        <circle cx="8" cy="15" r="4" /><path d="M10.8 12.2 20 3M17 6l2 2M14 9l2 2" />
-      </svg>
-    ),
+    Icon: Key,
+    span: "md:col-span-4",
+    tint: true,
     title: "Built for real apps",
     body: "Authenticated scans, scoped crawls, request budgets, a CI baseline, and a headless browser for single-page apps.",
   },
   {
-    svg: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={icon}>
-        <rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 9l3 3-3 3M13 15h4" />
-      </svg>
-    ),
+    Icon: TerminalWindow,
+    span: "md:col-span-2",
+    tint: false,
     title: "Yours, free, no leash",
-    body: "MIT licensed. No dashboard to buy, no agent to install, no account. It runs in your terminal or inside Claude.",
+    body: "MIT licensed. No dashboard to buy, no agent, no account. It runs in your terminal or inside Claude.",
   },
 ]
 
@@ -92,10 +79,10 @@ export default function Home() {
       <section id="overview" className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-grid opacity-50" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[620px] hero-glow" />
-        <div className="relative mx-auto max-w-5xl px-5 pb-16 pt-36 text-center sm:pt-40">
+        <div className="relative mx-auto max-w-5xl px-5 pb-16 pt-28 text-center sm:pt-32">
           <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/60 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand" /> f*ck your app
+            <span className="inline-flex items-center rounded-full border border-line bg-surface/60 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+              f*ck your app
             </span>
           </Reveal>
           <Reveal delay={60}>
@@ -106,10 +93,9 @@ export default function Home() {
             </h1>
           </Reveal>
           <Reveal delay={120}>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-              An open-source scanner that hunts your web app or Android APK the way an attacker would, then hands
-              you the exact request that broke it and the line to fix. 36 OWASP-mapped checks. Non-destructive.
-              Runs in your terminal or straight inside Claude.
+            <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted">
+              Point it at a web app or an APK. It finds the holes, proves them with the exact request, and hands you
+              the fix.
             </p>
           </Reveal>
           <Reveal delay={180}>
@@ -159,15 +145,18 @@ export default function Home() {
         <Reveal>
           <h2 className="font-display text-3xl font-semibold tracking-tight">Why fya</h2>
         </Reveal>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-6">
           {features.map((f, i) => (
-            <Reveal key={f.title} delay={i * 60}>
-              <div className="group h-full rounded-2xl border border-line bg-surface/40 p-6 transition duration-200 hover:border-brand/40 hover:bg-surface">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/[0.03] text-brand">
-                  {f.svg}
-                </div>
+            <Reveal key={f.title} delay={i * 60} className={f.span}>
+              <div
+                className={
+                  "group flex h-full flex-col rounded-2xl border border-line p-6 transition duration-200 hover:border-brand/40 " +
+                  (f.tint ? "bg-gradient-to-br from-brand/[0.08] to-surface/30" : "bg-surface/40 hover:bg-surface")
+                }
+              >
+                <f.Icon size={24} weight="duotone" className="text-brand" />
                 <h3 className="font-display mt-4 text-lg font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{f.body}</p>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">{f.body}</p>
               </div>
             </Reveal>
           ))}
@@ -179,16 +168,13 @@ export default function Home() {
           <div className="relative overflow-hidden rounded-3xl border border-line bg-surface/50 p-8 sm:p-12">
             <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-brand/10 blur-3xl" />
             <div className="relative">
-              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-brand">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand" /> Run it inside Claude
-              </div>
+              <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-brand">Run it inside Claude</div>
               <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
                 No terminal? Tell Claude to break it.
               </h2>
               <p className="mt-3 max-w-2xl text-muted">
-                fya ships as a Claude skill. Drop it into your Claude setup and just say what to scan. Claude
-                confirms you own the target, runs the same non-destructive checks itself, and reports right in the
-                chat. No package required.
+                fya ships as a Claude skill. Drop it into your setup and say what to scan. Claude confirms you own
+                the target, runs the same non-destructive checks itself, and reports right in the chat.
               </p>
               <div className="mt-8 grid gap-6 md:grid-cols-2">
                 <div>
@@ -212,19 +198,21 @@ export default function Home() {
         <Reveal>
           <h2 className="font-display text-3xl font-semibold tracking-tight">How it works</h2>
         </Reveal>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ol className="mt-10">
           {steps.map(([title, body], i) => (
             <Reveal key={title} delay={i * 50}>
-              <div className="h-full rounded-2xl border border-line bg-surface/40 p-6">
-                <div className="font-display flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-sm font-semibold text-brand">
+              <li className="flex gap-6 rounded-xl px-4 py-4 transition hover:bg-surface/40">
+                <span className="font-display w-10 shrink-0 text-2xl font-semibold tabular-nums text-brand/45">
                   {String(i + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <h3 className="font-display text-lg font-semibold">{title}</h3>
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{body}</p>
                 </div>
-                <h3 className="font-display mt-4 text-lg font-semibold">{title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted">{body}</p>
-              </div>
+              </li>
             </Reveal>
           ))}
-        </div>
+        </ol>
       </section>
 
       <section className="border-t border-line bg-surface/20">
@@ -241,10 +229,7 @@ export default function Home() {
             {areas.map(([title, body], i) => (
               <Reveal key={title} delay={i * 40}>
                 <div className="h-full rounded-xl border border-line bg-surface/40 p-5">
-                  <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                    <h3 className="text-sm font-semibold">{title}</h3>
-                  </div>
+                  <h3 className="text-sm font-semibold">{title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted">{body}</p>
                 </div>
               </Reveal>
@@ -264,10 +249,10 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link href="/docs" className={primaryBtn}>
-                Get started
+                Read the docs
               </Link>
               <a href="https://github.com/ayam04/fya" className={ghostBtn}>
-                Star on GitHub
+                View on GitHub
               </a>
             </div>
             <div className="mx-auto mt-10 max-w-lg text-left">
