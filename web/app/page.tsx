@@ -81,7 +81,7 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[620px] hero-glow" />
         <div className="relative mx-auto max-w-5xl px-5 pb-16 pt-28 text-center sm:pt-32">
           <Reveal>
-            <span className="inline-flex items-center rounded-full border border-line bg-surface/60 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+            <span className="inline-flex items-center rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-brand shadow-[0_0_24px_-8px_rgba(255,77,77,0.65)]">
               f*ck your app
             </span>
           </Reveal>
