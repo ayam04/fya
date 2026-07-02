@@ -10,6 +10,8 @@ const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", 
 
 export const viewport: Viewport = {
   themeColor: "#0a0b0d",
+  width: "device-width",
+  initialScale: 1,
 }
 
 export const metadata: Metadata = {

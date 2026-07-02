@@ -89,7 +89,7 @@ export default function Home() {
             </span>
           </Reveal>
           <Reveal delay={60}>
-            <h1 className="font-display mx-auto mt-6 max-w-3xl text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+            <h1 className="font-display mx-auto mt-6 max-w-3xl text-4xl font-semibold leading-[1.06] tracking-tight sm:text-6xl md:text-7xl">
               Point it at your app.
               <br />
               <span className="text-gradient">It tries to break it.</span>

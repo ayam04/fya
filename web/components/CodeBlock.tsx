@@ -20,7 +20,7 @@ export function CodeBlock({ code, className = "" }: { code: string; className?: 
       <button
         onClick={copy}
         aria-label="Copy to clipboard"
-        className="absolute right-2 top-2 cursor-pointer rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted opacity-0 transition group-hover:opacity-100 hover:text-ink focus:opacity-100"
+        className="absolute right-2 top-2 cursor-pointer rounded-md border border-line bg-surface/90 px-2 py-1 text-xs text-muted backdrop-blur transition hover:text-ink focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
       >
         {copied ? "copied" : "copy"}
       </button>
