@@ -37,7 +37,7 @@ def test_whitebox_finds_secrets_and_risky_code(tmp_path):
         "subprocess.run(cmd, shell=True)\n"
         "requests.get(url, verify=False)\n"
     )
-    (tmp_path / "config.env").write_text("API_KEY=\"a1b2c3d4e5f6g7h8\"\n")
+    (tmp_path / "config.env").write_text("API_KEY=\"not-a-real-secret\"\n")
     target = detect_target(str(tmp_path))
     result = run_scan(target, profile=Profile.SAFE, detect_external=False)
 
