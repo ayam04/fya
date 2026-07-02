@@ -13,6 +13,8 @@ NOTICE = (
 def authorize(target: Target, authorized: bool) -> tuple[bool, str]:
     if target.kind is TargetKind.APK:
         return True, "local APK analysis"
+    if target.kind is TargetKind.SOURCE:
+        return True, "local source analysis"
     if is_local(target.host or ""):
         return True, f"local target {target.host}"
     if authorized:

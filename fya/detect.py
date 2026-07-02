@@ -38,6 +38,8 @@ def detect_target(raw: str) -> Target:
     candidate = raw.strip()
     if _looks_like_apk(candidate):
         return Target(raw=raw, kind=TargetKind.APK, apk_path=os.path.abspath(candidate))
+    if "://" not in candidate and os.path.isdir(candidate):
+        return Target(raw=raw, kind=TargetKind.SOURCE, source_path=os.path.abspath(candidate))
     return _web_target(candidate)
 
 

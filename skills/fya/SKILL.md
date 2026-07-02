@@ -1,6 +1,6 @@
 ---
 name: fya
-description: Use when the user wants to security-test an application they own or are authorized to test. Triggers include "scan my app", "pentest my localhost", "break my app", "security test this API", "check my APK for vulnerabilities", "run an OWASP scan", "find security issues in my web app", or pointing Claude at a localhost URL or an .apk file and asking what is wrong with it. Performs dynamic, non-destructive security testing of a running web server (localhost or a URL) or an Android .apk, mapped to the OWASP Top 10 and OWASP MASVS, entirely within the session.
+description: Use when the user wants to security-test or break an application they own or are authorized to test. Triggers include "scan my app", "pentest my localhost", "break my app", "security test this API", "check my APK for vulnerabilities", "run an OWASP scan", "find security issues in my web app", "black box / gray box / white box test this", "fuzz my inputs", "static analysis of my code", "check this repo for secrets", or pointing Claude at a localhost URL, an .apk file, or a source code directory and asking what is wrong with it. Performs dynamic, non-destructive black/gray-box testing of a running web server or Android .apk, plus white-box static analysis of a source directory, mapped to the OWASP Top 10 and OWASP MASVS, entirely within the session.
 ---
 
 # fya: break your app, safely, in a session
@@ -32,7 +32,7 @@ back off on errors or timeouts.
 Create a todo per step and work through them in order.
 
 1. **Scope and authorize** as above. Pick a mode and profile (see below).
-2. **Detect the target kind.** A path ending in `.apk` (or a zip containing an `AndroidManifest.xml`) is a mobile target. Otherwise it is a web target; a bare host defaults to `http` for localhost and private addresses and `https` otherwise.
+2. **Detect the target kind.** A path ending in `.apk` (or a zip containing an `AndroidManifest.xml`) is a mobile target. A local directory is a source target for white-box analysis. Otherwise it is a web target; a bare host defaults to `http` for localhost and private addresses and `https` otherwise.
 3. **Fingerprint** a web target: fetch the base URL, read the `Server`, `X-Powered-By`, and `Set-Cookie` headers, the response content type, and any framework tells in the body. This decides which checks are worth running.
 4. **Plan the test matrix.** From the target kind, fingerprint, and profile, list the check families that apply. See `references/checks.md` for the full catalog and its OWASP/CWE mapping. This is the "decide what testing to do" step: do not run mobile checks on a URL or active injection probes in a passive scan.
 5. **Execute**, family by family, using the concrete probes in:
@@ -45,14 +45,23 @@ Create a todo per step and work through them in order.
 
 ## Modes
 
-A mode selects which families run.
+A mode selects which families run. The three knowledge-level modes map to the classic
+black/gray/white-box taxonomy; see `references/strategies.md` for the techniques and the
+"break the app" playbook.
 
 - `recon`: passive, read-only reconnaissance (headers, TLS, cookies, disclosure, fingerprint).
 - `web`: web app checks plus TLS and API.
 - `api`: API surface plus supporting web checks.
 - `mobile`: Android APK static analysis.
+- `blackbox`: no internals. Input fuzzing and robustness (malformed, oversized, wrong-type, unicode, null-byte, format-string payloads to find crashes and stack traces) plus the outside-in web and TLS checks.
+- `graybox`: partial knowledge. IDOR (change object ids), auth-bypass on protected routes, and API contract probing.
+- `whitebox`: source access. Static analysis of a code directory for hardcoded secrets, risky sinks (eval, exec, shell=True, pickle, disabled TLS verification), and, if `semgrep` or `bandit` is installed, their rule findings folded in.
 - `full`: everything that applies, at the aggressive profile.
 - `auto` (default): everything that applies to the detected target.
+
+Deliberately out of scope: load/stress and network-chaos testing. They are denial-of-service
+shaped and break the non-destructive guarantee. If the user wants those, point them to k6,
+Locust, or Toxiproxy on infrastructure they own; do not run them here.
 
 ## Profiles
 
@@ -73,6 +82,7 @@ A profile sets how hard to probe, independent of the mode.
 ## Reference files
 
 - `references/checks.md` - the full check catalog with OWASP/MASVS and CWE.
+- `references/strategies.md` - black/gray/white-box methodology and the break-the-app playbook (fuzzing, boundaries, IDOR, auth bypass, source static analysis).
 - `references/web.md` - web passive, active, advanced, and hardening techniques.
 - `references/tls-api.md` - TLS and API techniques.
 - `references/apk.md` - APK static analysis techniques.

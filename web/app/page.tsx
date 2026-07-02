@@ -9,22 +9,22 @@ const features = [
     Icon: Target,
     span: "md:col-span-2",
     tint: false,
-    title: "One tool, two targets",
-    body: "A running web server or an Android .apk, same command. It works out which and runs only what fits.",
+    title: "One tool, three targets",
+    body: "A running web server, an Android .apk, or a source directory, same command. It works out which and runs only what fits.",
   },
   {
     Icon: Lightning,
     span: "md:col-span-4",
     tint: true,
     title: "It actually breaks things",
-    body: "Reflected XSS, SQLi, SSTI, open redirects, path traversal, CORS holes, a leaking .env, a debuggable APK. If it is there, you get the request that proves it.",
+    body: "Reflected XSS, SQLi, SSTI, IDOR, input fuzzing, a leaking .env, hardcoded secrets in your source, a debuggable APK. If it is there, you get the receipt that proves it.",
   },
   {
     Icon: ShieldCheck,
     span: "md:col-span-3",
     tint: false,
-    title: "36 checks, no guesswork",
-    body: "Every finding maps to the OWASP Top 10 or MASVS and a CWE, with a fix. No vague risk scores, no filler.",
+    title: "Black, gray, and white box",
+    body: "42 checks across all three. Fuzz inputs from outside, probe access control with partial knowledge, or scan the source itself. Every finding maps to OWASP and a CWE.",
   },
   {
     Icon: MagnifyingGlass,
@@ -50,7 +50,7 @@ const features = [
 ]
 
 const steps = [
-  ["Detect", "Web server or .apk. It decides, you do not configure it."],
+  ["Detect", "Web server, .apk, or source directory. It decides, you do not configure it."],
   ["Fingerprint", "Reads the stack, framework, cookies, and whether it is a JSON API from the first responses."],
   ["Plan", "Picks only the checks that fit the target and the profile."],
   ["Break", "Runs non-destructive probes and tunes pacing to what the target tolerates. No flooding, ever."],
@@ -63,6 +63,9 @@ const areas = [
   ["Web active", "Reflected XSS, error-based SQLi, open redirect, path traversal, CORS, dangerous methods, exposed files."],
   ["Web advanced", "Server-side template injection, missing CSRF token, Host header injection, CRLF injection."],
   ["Web hardening", "CSP holes, JWT algorithm and claims, outdated JS libraries, security.txt and robots.txt."],
+  ["Black box", "Input fuzzing and robustness: malformed, oversized, wrong-type, and unicode payloads that surface crashes and stack traces."],
+  ["Gray box", "Insecure direct object references and protected routes reachable without authentication."],
+  ["White box", "Point it at a source directory: hardcoded secrets, risky sinks, and semgrep or bandit folded in."],
   ["TLS", "Certificate trust and expiry, weak protocol versions, missing HTTP to HTTPS upgrade."],
   ["API", "OpenAPI and Swagger exposure, GraphQL introspection, verbose errors, unauthenticated admin endpoints."],
   ["APK static", "Hardcoded secrets, cleartext endpoints, and manifest sins via androguard."],

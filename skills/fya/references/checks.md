@@ -63,6 +63,28 @@ need an `.apk`. A check runs only at or above its minimum profile.
 | Verbose error disclosure | medium | A05 Security Misconfiguration | CWE-209 |
 | Unauthenticated admin / actuator endpoints | medium | A05 Security Misconfiguration | CWE-497 |
 
+## Black box (min profile: safe)
+
+| Check | Severity | OWASP / MASVS | CWE |
+|-------|----------|---------------|-----|
+| Input fuzzing: malformed input triggers a 5xx | medium | A05 Security Misconfiguration | CWE-20 |
+| Input fuzzing: stack trace disclosed on bad input | low | A05 Security Misconfiguration | CWE-209 |
+
+## Gray box (min profile: safe)
+
+| Check | Severity | OWASP / MASVS | CWE |
+|-------|----------|---------------|-----|
+| Insecure direct object reference (IDOR) | medium (confidence low) | A01 Broken Access Control | CWE-639 |
+| Protected route reachable without auth | medium (confidence low) | A01 Broken Access Control | CWE-306 |
+
+## White box (source directory)
+
+| Check | Severity | OWASP / MASVS | CWE |
+|-------|----------|---------------|-----|
+| Hardcoded secrets in source (min profile: passive) | high | A07 Identification and Authentication Failures | CWE-798 |
+| Risky code patterns: eval, exec, shell=True, pickle, verify=False (min profile: passive) | low - high | A03 Injection | CWE-95, 78, 502, 295, 79 |
+| External static analysis via semgrep or bandit (min profile: safe) | info - high | A06 Vulnerable and Outdated Components | varies |
+
 ## APK static (min profile: passive)
 
 | Check | Severity | OWASP / MASVS | CWE |

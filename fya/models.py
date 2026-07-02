@@ -24,6 +24,7 @@ class Confidence(str, Enum):
 class TargetKind(str, Enum):
     WEB = "web"
     APK = "apk"
+    SOURCE = "source"
 
 
 class Profile(str, Enum):
@@ -64,12 +65,15 @@ class Target:
     port: Optional[int] = None
     url: Optional[str] = None
     apk_path: Optional[str] = None
+    source_path: Optional[str] = None
     fingerprint: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
 
     def label(self) -> str:
         if self.kind is TargetKind.APK:
             return self.apk_path or self.raw
+        if self.kind is TargetKind.SOURCE:
+            return self.source_path or self.raw
         return self.url or self.raw
 
     def base_url(self) -> Optional[str]:
@@ -179,6 +183,7 @@ class ScanResult:
                 "host": self.target.host,
                 "port": self.target.port,
                 "apk_path": self.target.apk_path,
+                "source_path": self.target.source_path,
                 "fingerprint": self.target.fingerprint,
             },
             "profile": self.profile.value,

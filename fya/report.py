@@ -31,6 +31,27 @@ _SARIF_LEVEL = {
     "info": "note",
 }
 
+_GROUP_ORDER = ["blackbox", "web", "tls", "api", "graybox", "whitebox", "apk", "integrations"]
+_GROUP_LABEL = {
+    "blackbox": "black box · robustness",
+    "web": "web",
+    "tls": "tls",
+    "api": "api",
+    "graybox": "gray box · access control",
+    "whitebox": "white box · source",
+    "apk": "mobile · apk",
+    "integrations": "external tools",
+}
+
+
+def _grouped(result: ScanResult):
+    buckets = {}
+    for f in result.sorted_findings():
+        buckets.setdefault(f.check.split(".")[0], []).append(f)
+    ordered = [(g, buckets.pop(g)) for g in _GROUP_ORDER if g in buckets]
+    ordered += [(g, buckets[g]) for g in sorted(buckets)]
+    return ordered
+
 
 def render_console(result: ScanResult, console=None) -> None:
     from rich.console import Console
@@ -46,28 +67,33 @@ def render_console(result: ScanResult, console=None) -> None:
         if counts[s.value]
     ) or "[green]no findings[/]"
 
+    groups = _grouped(result)
+    breakdown = "  ".join(f"[grey62]{_GROUP_LABEL.get(g, g)}[/] [bold]{len(fs)}[/]" for g, fs in groups)
+
     console.print(
         Panel(
             f"target: [bold]{result.target.label()}[/]\n"
             f"kind: {result.target.kind.value}    profile: {result.profile.value}    "
-            f"duration: {result.duration_seconds():.1f}s\n"
-            f"findings: {summary}",
+            f"duration: {result.duration_seconds():.1f}s    checks: {len(result.checks_run)}\n"
+            f"findings: {summary}"
+            + (f"\nby test: {breakdown}" if breakdown else ""),
             title="fya scan report",
             border_style="grey37",
         )
     )
 
-    if result.findings:
+    for group, findings in groups:
+        console.print(f"\n[bold]{_GROUP_LABEL.get(group, group)}[/] [grey50]({len(findings)})[/]")
         table = Table(show_lines=False, border_style="grey30", header_style="bold")
         table.add_column("sev", no_wrap=True)
         table.add_column("title")
-        table.add_column("category", style="grey62")
+        table.add_column("cwe", style="grey62", no_wrap=True)
         table.add_column("location", style="grey62", overflow="fold")
-        for f in result.sorted_findings():
+        for f in findings:
             table.add_row(
                 f"[{_SEV_COLOR[f.severity.value]}]{f.severity.value}[/]",
                 f.title,
-                f.category or "",
+                f.cwe or "",
                 f.location or "",
             )
         console.print(table)
@@ -152,23 +178,25 @@ def to_markdown(result: ScanResult) -> str:
     ]
     if not result.findings:
         lines.append("No findings.")
-    for f in result.sorted_findings():
-        lines += [
-            f"### [{f.severity.value.upper()}] {f.title}",
-            "",
-            f"- category: {f.category}" + (f" | CWE: {f.cwe}" if f.cwe else ""),
-            f"- confidence: {f.confidence.value}",
-            f"- location: `{f.location}`" if f.location else "",
-            "",
-            f.description,
-            "",
-            f"**Remediation:** {f.remediation}" if f.remediation else "",
-            "",
-            "```",
-            (f.evidence or "").strip()[:2000],
-            "```",
-            "",
-        ]
+    for group, findings in _grouped(result):
+        lines += [f"### {_GROUP_LABEL.get(group, group)} ({len(findings)})", ""]
+        for f in findings:
+            lines += [
+                f"#### [{f.severity.value.upper()}] {f.title}",
+                "",
+                f"- category: {f.category}" + (f" | CWE: {f.cwe}" if f.cwe else ""),
+                f"- confidence: {f.confidence.value}",
+                f"- location: `{f.location}`" if f.location else "",
+                "",
+                f.description,
+                "",
+                f"**Remediation:** {f.remediation}" if f.remediation else "",
+                "",
+                "```",
+                (f.evidence or "").strip()[:2000],
+                "```",
+                "",
+            ]
     return "\n".join(line for line in lines if line is not None)
 
 
@@ -181,14 +209,16 @@ def to_html(result: ScanResult) -> str:
         if counts[s.value]
     ) or '<span class="chip ok">no findings</span>'
 
-    cards = []
-    for f in result.sorted_findings():
-        refs = "".join(
-            f'<a href="{html.escape(r)}" target="_blank" rel="noopener">{html.escape(r)}</a>'
-            for r in f.references
-        )
-        cards.append(
-            f"""
+    sections = []
+    for group, findings in _grouped(result):
+        cards = []
+        for f in findings:
+            refs = "".join(
+                f'<a href="{html.escape(r)}" target="_blank" rel="noopener">{html.escape(r)}</a>'
+                for r in f.references
+            )
+            cards.append(
+                f"""
       <article class="card">
         <header>
           <span class="badge" style="background:{_SEV_HEX[f.severity.value]}">{f.severity.value}</span>
@@ -201,9 +231,13 @@ def to_html(result: ScanResult) -> str:
         {f'<pre>{html.escape((f.evidence or "").strip()[:4000])}</pre>' if f.evidence else ''}
         {f'<div class="refs">{refs}</div>' if refs else ''}
       </article>"""
+            )
+        sections.append(
+            f'<h2 class="group">{html.escape(_GROUP_LABEL.get(group, group))} '
+            f'<span>{len(findings)}</span></h2>\n' + "\n".join(cards)
         )
 
-    body_cards = "\n".join(cards) or "<p>No findings.</p>"
+    body_cards = "\n".join(sections) or "<p>No findings.</p>"
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -218,6 +252,8 @@ h1{{font-size:20px;margin:0 0 4px}}
 .chips{{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 28px}}
 .chip{{border:1px solid #30363d;border-radius:999px;padding:4px 12px;font-size:13px}}
 .chip.ok{{color:#3fb950;border-color:#238636}}
+h2.group{{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#8a94a6;margin:26px 0 12px;border-bottom:1px solid #21262d;padding-bottom:6px}}
+h2.group span{{color:#ff4d4d;margin-left:4px}}
 .card{{border:1px solid #21262d;border-radius:10px;padding:16px 18px;margin:0 0 14px;background:#11151d}}
 .card header{{display:flex;align-items:center;gap:10px}}
 .card h3{{font-size:15px;margin:0}}

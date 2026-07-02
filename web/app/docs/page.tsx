@@ -7,8 +7,25 @@ export const metadata = {
     "Install fya, scan a web server or an APK, run it as a Claude skill, pick a mode and profile, run authenticated and scoped scans, gate CI with a baseline, and read the full check catalog.",
 }
 
+const VERSION = "0.4.0"
+
+const changelog = [
+  [
+    "0.4.0",
+    "Black, gray, and white-box test strategies",
+    [
+      "New black-box mode: input fuzzing and robustness. Malformed, oversized, wrong-type, unicode, null-byte, and format-string payloads that surface crashes and leaked stack traces.",
+      "New gray-box mode: IDOR detection and auth-bypass probing of protected routes.",
+      "New white-box mode: point fya at a source directory. Scans for hardcoded secrets and risky sinks (eval, exec, shell=True, pickle, disabled TLS verification), and folds in semgrep or bandit when installed.",
+      "Reports now group findings by test strategy, in the console, HTML, and Markdown.",
+      "Load, stress, and network-chaos testing are deliberately excluded. They are denial-of-service shaped. Use k6, Locust, or Toxiproxy for those.",
+    ],
+  ],
+]
+
 const nav = [
   ["install", "Installation"],
+  ["whats-new", "What's new"],
   ["quickstart", "Quickstart"],
   ["skill", "Claude skill"],
   ["targets", "Targets"],
@@ -29,6 +46,9 @@ const modes = [
   ["web", "Web app: headers, TLS, active web checks, and API."],
   ["api", "API surface plus supporting web checks."],
   ["mobile", "Android APK static analysis."],
+  ["blackbox", "No internals: input fuzzing and robustness plus outside-in web checks."],
+  ["graybox", "Partial knowledge: IDOR, auth bypass, and API contract probing."],
+  ["whitebox", "Source access: static analysis of a code directory."],
   ["full", "Everything, aggressive, including external tool handoff."],
 ]
 
@@ -51,6 +71,9 @@ const checks = [
   ["Web active", "safe", ["web.reflected_xss", "web.sql_injection", "web.open_redirect", "web.path_traversal", "web.cors_misconfig", "web.dangerous_methods", "web.sensitive_files"]],
   ["Web advanced", "safe / aggressive", ["web.ssti", "web.csrf", "web.host_header", "web.crlf"]],
   ["Web hardening", "passive", ["web.csp_weaknesses", "web.jwt_weak_algorithm", "web.jwt_missing_expiry", "web.jwt_sensitive_claims", "web.frontend_libraries", "web.security_txt", "web.robots_sensitive_paths"]],
+  ["Black box", "safe", ["blackbox.input_fuzzing"]],
+  ["Gray box", "safe", ["graybox.idor", "graybox.auth_bypass"]],
+  ["White box (source)", "passive / safe", ["whitebox.hardcoded_secrets", "whitebox.dangerous_patterns", "whitebox.static_analysis"]],
   ["TLS", "passive", ["tls.certificate", "tls.weak_protocol", "tls.https_upgrade"]],
   ["API", "safe", ["api.docs_exposure", "api.graphql_introspection", "api.verbose_errors", "api.admin_endpoints"]],
   ["APK static", "passive", ["apk.hardcoded_secrets", "apk.cleartext_urls", "apk.manifest"]],
@@ -89,7 +112,15 @@ export default function Docs() {
       </aside>
 
       <article className="min-w-0 max-w-3xl">
-        <h1 className="font-display text-4xl font-semibold tracking-tight">Documentation</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-display text-4xl font-semibold tracking-tight">Documentation</h1>
+          <a
+            href="#whats-new"
+            className="rounded-full border border-brand/30 bg-brand/10 px-2.5 py-1 font-mono text-xs font-medium text-brand shadow-[0_0_20px_-8px_rgba(255,77,77,0.7)]"
+          >
+            v{VERSION}
+          </a>
+        </div>
         <p className="mt-3 text-lg text-muted">Everything to install fya, scan your app, and wire it into CI.</p>
         <div className="mt-6">
           <Callout tone="warn">
@@ -103,6 +134,26 @@ export default function Docs() {
         <CodeBlock code={"pip install fya\npip install \"fya[apk]\"       # Android APK manifest analysis\npip install \"fya[browser]\"   # headless-browser crawler for SPAs"} />
         <p className={p + " mt-4"}>From a clone, with the test tooling:</p>
         <CodeBlock code={"git clone https://github.com/ayam04/fya\ncd fya\npip install -e \".[dev]\""} />
+
+        <H2 id="whats-new">What&apos;s new</H2>
+        {changelog.map(([version, title, items]) => (
+          <div key={version as string} className="rounded-xl border border-line bg-surface/40 p-5">
+            <div className="mb-3 flex items-baseline gap-3">
+              <span className="rounded-md bg-brand/15 px-2 py-0.5 font-mono text-[13px] font-semibold text-brand">
+                v{version as string}
+              </span>
+              <h3 className="text-base font-semibold">{title as string}</h3>
+            </div>
+            <ul className="space-y-2">
+              {(items as string[]).map((item) => (
+                <li key={item} className="flex gap-2.5 text-[15px] leading-relaxed text-ink/80">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand/70" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
 
         <H2 id="quickstart">Quickstart</H2>
         <p className={p}>Point fya at a local server or an APK. Localhost needs no authorization flag.</p>
@@ -131,9 +182,11 @@ export default function Docs() {
         <H2 id="targets">Targets</H2>
         <p className={p}>
           fya detects the target automatically. A path ending in <Code>.apk</Code> (or any zip containing an
-          AndroidManifest) is analyzed statically. Anything else is a web target; a bare host defaults to{" "}
-          <Code>http</Code> for localhost and private addresses and <Code>https</Code> otherwise.
+          AndroidManifest) is analyzed statically. A local directory is treated as source and analyzed white-box.
+          Anything else is a web target; a bare host defaults to <Code>http</Code> for localhost and private
+          addresses and <Code>https</Code> otherwise.
         </p>
+        <CodeBlock code={"fya scan http://127.0.0.1:8000    # web target\nfya scan ./app-release.apk        # android package\nfya scan ./my-service             # source directory, white-box"} />
 
         <H2 id="modes">Scan modes</H2>
         <p className={p}>
@@ -150,6 +203,13 @@ export default function Docs() {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="mt-4">
+          <Callout tone="warn">
+            Load, stress, and network-chaos testing are deliberately out of scope. They are
+            denial-of-service shaped and break the non-destructive guarantee. Use k6, Locust, or
+            Toxiproxy for those, on infrastructure you own.
+          </Callout>
         </div>
 
         <H2 id="profiles">Profiles</H2>
@@ -195,8 +255,8 @@ export default function Docs() {
 
         <H2 id="checks">Checks catalog</H2>
         <p className={p}>
-          36 checks across eight areas, each mapped to the OWASP Top 10 or MASVS and a CWE. Every check runs only at
-          or above its minimum profile.
+          42 checks across eleven areas, each mapped to the OWASP Top 10 or MASVS and a CWE. Every check runs only
+          at or above its minimum profile.
         </p>
         <div className="space-y-4">
           {checks.map(([area, prof, names]) => (

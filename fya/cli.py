@@ -11,7 +11,7 @@ from .models import Profile
 
 _EXT_FORMAT = {".json": "json", ".sarif": "sarif", ".md": "markdown", ".html": "html"}
 
-ALL_CATEGORIES = {"web", "tls", "api", "apk", "integrations"}
+ALL_CATEGORIES = {"web", "tls", "api", "apk", "integrations", "blackbox", "graybox", "whitebox"}
 
 MODES = {
     "auto": {"categories": None, "profile": None},
@@ -19,6 +19,9 @@ MODES = {
     "web": {"categories": {"web", "tls", "api"}, "profile": None},
     "api": {"categories": {"api", "web"}, "profile": None},
     "mobile": {"categories": {"apk"}, "profile": None},
+    "blackbox": {"categories": {"blackbox", "web", "tls"}, "profile": None},
+    "graybox": {"categories": {"graybox", "api"}, "profile": None},
+    "whitebox": {"categories": {"whitebox"}, "profile": None},
     "full": {"categories": ALL_CATEGORIES, "profile": "aggressive"},
 }
 
@@ -28,6 +31,9 @@ MODE_DESC = {
     "web": "web app: headers, TLS, active web checks, and API",
     "api": "API surface plus supporting web checks",
     "mobile": "Android APK static analysis",
+    "blackbox": "no internals: input fuzzing and robustness plus outside-in web checks",
+    "graybox": "partial knowledge: IDOR, auth bypass, and API contract probing",
+    "whitebox": "source access: static analysis of a code directory (secrets, risky sinks)",
     "full": "everything, aggressive, including external tool handoff",
 }
 
@@ -37,6 +43,9 @@ _CAT_LABEL = {
     "api": "api",
     "apk": "apk",
     "integrations": "tools",
+    "blackbox": "black",
+    "graybox": "gray",
+    "whitebox": "white",
 }
 
 
@@ -48,8 +57,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"fya {__version__}")
     sub = parser.add_subparsers(dest="command")
 
-    scan = sub.add_parser("scan", help="scan a localhost/URL server or an .apk file")
-    scan.add_argument("target", help="URL, host:port, or path to an .apk")
+    scan = sub.add_parser("scan", help="scan a localhost/URL server, an .apk file, or a source directory")
+    scan.add_argument("target", help="URL, host:port, path to an .apk, or a source code directory")
     scan.add_argument(
         "--mode",
         choices=list(MODES),
@@ -62,7 +71,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="pick the mode and profile from a menu before scanning",
     )
-    scan.add_argument("--only", help="comma-separated categories to include (web,tls,api,apk,integrations)")
+    scan.add_argument("--only", help="comma-separated categories to include (web,tls,api,apk,integrations,blackbox,graybox,whitebox)")
     scan.add_argument("--skip", help="comma-separated categories to exclude")
     scan.add_argument(
         "--profile",
@@ -302,6 +311,11 @@ def _list_modes() -> int:
     for name, desc in MODE_DESC.items():
         table.add_row(name, desc)
     console.print(table)
+    console.print(
+        "[grey50]note: fya does not run load/stress or network-chaos tests. They are "
+        "denial-of-service shaped and violate the non-destructive guarantee. Use k6, "
+        "Locust, or Toxiproxy for those, on infrastructure you own.[/]"
+    )
     return 0
 
 

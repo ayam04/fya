@@ -28,6 +28,8 @@ def create_app() -> Flask:
             "<a href='/transfer-form'>transfer</a>"
             "<a href='/link'>link</a>"
             "<a href='/setheader?lang=en'>setheader</a>"
+            "<a href='/account?id=1'>account</a>"
+            "<a href='/admin'>admin</a>"
         )
         resp = make_response(f"<html><title>Vulnerable Shop</title><body>welcome {links}</body></html>")
         resp.set_cookie("session", "abc123")
@@ -83,6 +85,22 @@ def create_app() -> Flask:
     @app.route("/transfer", methods=["POST"])
     def transfer():
         return "ok"
+
+    @app.route("/account")
+    def account():
+        accounts = {1: "alice: checking balance 100.00 usd", 2: "bob: checking balance 250.00 usd"}
+        try:
+            aid = int(request.args.get("id", "1"))
+        except ValueError:
+            return Response("bad request", status=400)
+        if aid not in accounts:
+            return Response("account not found", status=404)
+        return Response(accounts[aid])
+
+    @app.route("/admin")
+    def admin():
+        body = "<h1>Admin Panel</h1>" + "<div>user management console entry</div>" * 20
+        return Response(f"<html><body>{body}</body></html>")
 
     @app.route("/link")
     def link():

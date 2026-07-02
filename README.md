@@ -47,20 +47,21 @@ A dynamic, target-adaptive security scanner for localhost servers and Android AP
 ## What it is
 
 `fya` is an open-source, dynamic security scanner. Give it a running server
-(localhost or a URL) or an Android `.apk`, and it detects what the target is,
-fingerprints it, tunes its own scan parameters to fit, and runs a battery of
-security checks mapped to the OWASP Top 10 and OWASP MASVS. It ships its own
-fast, pure-Python checks and, when they are installed, orchestrates the
-best-in-class tools (Nuclei, Nikto, sqlmap, nmap, testssl, jadx, apkleaks)
+(localhost or a URL), an Android `.apk`, or a source directory, and it detects
+what the target is, fingerprints it, tunes its own scan parameters to fit, and
+runs a battery of security checks mapped to the OWASP Top 10 and OWASP MASVS. It
+ships its own fast, pure-Python checks and, when they are installed, orchestrates
+the best-in-class tools (Nuclei, Nikto, sqlmap, nmap, testssl, jadx, apkleaks)
 instead of reinventing them.
 
 ## Highlights
 
-- **One tool, two targets.** Scan a running web server or an Android `.apk` with the same command.
+- **One tool, three targets.** Scan a running web server, an Android `.apk`, or a source directory with the same command.
+- **Black, gray, and white box.** Fuzz inputs from outside, probe access control (IDOR, auth bypass) with partial knowledge, or run static analysis over the source itself.
 - **Adaptive.** Detects the stack, tunes payloads and request pacing, and runs only the checks that apply.
-- **You pick the mode.** Choose `recon`, `web`, `api`, `mobile`, or `full` (or an interactive menu), and watch a live per-category progress animation as it runs.
+- **You pick the mode.** Choose `recon`, `web`, `api`, `mobile`, `blackbox`, `graybox`, `whitebox`, or `full` (or an interactive menu), and watch a live per-category progress animation as it runs.
 - **Fits real apps and CI.** Authenticated scans (`--header`/`--cookie`/`--bearer`), scope and request-budget controls, an optional headless-browser crawler for single-page apps, and a baseline file to suppress known findings.
-- **36 checks, OWASP-mapped.** Web, API, TLS, and APK static analysis, each tagged to OWASP Top 10 / MASVS and CWE.
+- **42 checks, OWASP-mapped.** Web, API, TLS, black/gray-box, source static analysis, and APK, each tagged to OWASP Top 10 / MASVS and CWE, and grouped by test strategy in the report.
 - **Orchestrates, does not reinvent.** Uses Nuclei, Nikto, sqlmap, nmap, and testssl when present; falls back to built-in checks when not.
 - **Safe by default.** Non-destructive, no flooding, request pacing that backs off on errors, localhost allowed, remote requires explicit authorization.
 - **CI-ready reports.** Console, JSON, SARIF, Markdown, and self-contained HTML, with `--fail-on` exit codes.
@@ -104,6 +105,8 @@ fya scan http://127.0.0.1:8000 --profile aggressive
 
 # pick what to run, or choose from a menu
 fya scan http://127.0.0.1:8000 --mode web              # web + tls + api
+fya scan http://127.0.0.1:8000 --mode blackbox         # input fuzzing + outside-in
+fya scan http://127.0.0.1:8000 --mode graybox          # IDOR, auth bypass, API
 fya scan http://127.0.0.1:8000 --mode full             # everything, aggressive
 fya scan http://127.0.0.1:8000 --interactive           # menu to pick mode + profile
 fya modes                                               # list the modes
@@ -119,6 +122,9 @@ fya scan http://127.0.0.1:8000 --baseline .fya-baseline.json --fail-on high
 
 # analyze an Android app
 fya scan ./app-release.apk
+
+# white-box static analysis of a source directory
+fya scan ./my-service --mode whitebox
 
 # write a shareable report (format inferred from the extension)
 fya scan http://127.0.0.1:8000 -o report.html
@@ -154,8 +160,8 @@ adapts automatically, slowing down on errors, timeouts, and slow responses.
 
 ## What it checks
 
-36 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE.
-Full catalog in [docs/checks.md](docs/checks.md).
+42 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE,
+and grouped by test strategy in the report. Full catalog in [docs/checks.md](docs/checks.md).
 
 | Area           | Checks |
 |----------------|--------|
@@ -163,10 +169,17 @@ Full catalog in [docs/checks.md](docs/checks.md).
 | Web (active)   | Reflected XSS, error-based SQLi, open redirect, path traversal, CORS misconfiguration, dangerous HTTP methods, sensitive file exposure |
 | Web (advanced) | Server-side template injection (SSTI), missing CSRF token, Host header injection, CRLF/header injection |
 | Web (hardening) | CSP policy weaknesses, JWT (alg / expiry / sensitive claims), outdated JS libraries, security.txt and robots.txt |
+| Black box      | Input fuzzing and robustness: malformed, oversized, wrong-type, unicode, null-byte, and format-string payloads that surface 5xx crashes and leaked stack traces |
+| Gray box       | Insecure direct object references (IDOR), protected routes reachable without authentication |
+| White box (source) | Hardcoded secrets, risky sinks (eval, exec, shell=True, pickle, verify=False), semgrep/bandit folded in when installed |
 | TLS           | Certificate validity and trust, weak protocol versions, missing HTTP to HTTPS upgrade |
 | API           | OpenAPI/Swagger exposure, GraphQL introspection, verbose error disclosure, unauthenticated admin/debug endpoints |
 | APK (static)  | Hardcoded secrets, cleartext HTTP endpoints, manifest issues (debuggable, backup, exported components, cleartext, minSdk, permissions) |
 | Integrations  | Nuclei, Nikto, nmap, sqlmap, testssl/sslyze handoff, normalized into the same report |
+
+Load, stress, and network-chaos testing are deliberately out of scope: they are
+denial-of-service shaped and break the non-destructive guarantee. Use k6, Locust,
+or Toxiproxy for those, on infrastructure you own.
 
 <div align="center">
 
@@ -178,7 +191,7 @@ Full catalog in [docs/checks.md](docs/checks.md).
 
 ## How it adapts per target
 
-1. **Detect** whether the target is a web server or an `.apk`.
+1. **Detect** whether the target is a web server, an `.apk`, or a source directory.
 2. **Fingerprint** the tech stack (server, framework, cookies, whether it is a JSON API) from the first responses.
 3. **Select** only the checks that apply to that target kind and profile.
 4. **Tune** payloads, pacing, and concurrency to what the target tolerates.
