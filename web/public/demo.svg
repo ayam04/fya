@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 540" width="880" height="540" font-family="ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="22" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+    <radialGradient id="glow" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#ff4d4d" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0"/>
+    </radialGradient>
+    <style><![CDATA[
+      text { font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace; }
+      .r { opacity: 1; animation: rv .55s cubic-bezier(.2,.65,.3,1) both; }
+      @keyframes rv { from { opacity: 0 } to { opacity: 1 } }
+      .cursor { animation: blink 1.05s steps(1) infinite; }
+      @keyframes blink { 0%,50% { opacity: 1 } 50.01%,100% { opacity: 0 } }
+    ]]></style>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="8" y="8" width="864" height="524" rx="15" fill="#0d1017" stroke="#1e222b" stroke-width="1.5"/>
+  </g>
+  <rect x="8" y="8" width="864" height="150" rx="15" fill="url(#glow)"/>
+
+  <!-- title bar -->
+  <g>
+    <circle cx="34" cy="34" r="6" fill="#ff5f57"/>
+    <circle cx="54" cy="34" r="6" fill="#febc2e"/>
+    <circle cx="74" cy="34" r="6" fill="#28c840"/>
+    <text x="440" y="39" text-anchor="middle" font-size="13" fill="#6e7681">fya &#8212; scan</text>
+  </g>
+  <line x1="8" y1="58" x2="872" y2="58" stroke="#1e222b" stroke-width="1"/>
+
+  <!-- command -->
+  <g class="r" style="animation-delay:.15s">
+    <text x="30" y="98" font-size="16" fill="#3fb950">$</text>
+    <text x="50" y="98" font-size="16" fill="#e6edf3"><tspan fill="#ff5a5a" font-weight="bold">fya</tspan> scan http://localhost:8000</text>
+    <rect class="cursor" x="392" y="85" width="9" height="17" fill="#e6edf3"/>
+  </g>
+
+  <!-- run header -->
+  <text class="r" style="animation-delay:1s" x="30" y="128" font-size="14" fill="#8a94a6">authorized: local target 127.0.0.1    mode auto    profile safe</text>
+
+  <!-- scanning + progress -->
+  <text class="r" style="animation-delay:1.35s" x="30" y="156" font-size="14" fill="#6e7681">fingerprinting Flask/Werkzeug &#183; planning 58 checks</text>
+  <rect x="30" y="168" width="380" height="7" rx="3.5" fill="#1e222b"/>
+  <rect x="30" y="168" width="0" height="7" rx="3.5" fill="#ff4d4d">
+    <animate attributeName="width" from="0" to="380" begin="1.5s" dur="1s" fill="freeze"/>
+  </rect>
+  <text class="r" style="animation-delay:2.35s" x="420" y="175" font-size="12.5" fill="#6e7681">58/58</text>
+
+  <!-- findings header -->
+  <text class="r" style="animation-delay:2.55s" x="30" y="214" font-size="12" letter-spacing="1.5" fill="#6e7681">FINDINGS</text>
+
+  <!-- finding rows -->
+  <g class="r" style="animation-delay:2.85s">
+    <rect x="30" y="230" width="48" height="19" rx="4" fill="#ff4d4d"/>
+    <text x="54" y="243.5" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d1017">HIGH</text>
+    <text x="92" y="244" font-size="15" fill="#e6edf3">Reflected XSS</text>
+    <text x="360" y="244" font-size="14" fill="#6e7681">/search?q=&#8230;</text>
+    <text x="600" y="244" font-size="12.5" fill="#565f6b">CWE-79 &#183; A03</text>
+  </g>
+  <g class="r" style="animation-delay:3.15s">
+    <rect x="30" y="262" width="48" height="19" rx="4" fill="#ff4d4d"/>
+    <text x="54" y="275.5" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d1017">HIGH</text>
+    <text x="92" y="276" font-size="15" fill="#e6edf3">SQL injection</text>
+    <text x="360" y="276" font-size="14" fill="#6e7681">/user?id=&#8230;</text>
+    <text x="600" y="276" font-size="12.5" fill="#565f6b">CWE-89 &#183; A03</text>
+  </g>
+  <g class="r" style="animation-delay:3.45s">
+    <rect x="30" y="294" width="48" height="19" rx="4" fill="#ff4d4d"/>
+    <text x="54" y="307.5" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d1017">HIGH</text>
+    <text x="92" y="308" font-size="15" fill="#e6edf3">SSRF &#8594; cloud metadata</text>
+    <text x="360" y="308" font-size="14" fill="#6e7681">/fetch?url=&#8230;</text>
+    <text x="600" y="308" font-size="12.5" fill="#565f6b">CWE-918 &#183; A10</text>
+  </g>
+  <g class="r" style="animation-delay:3.75s">
+    <rect x="30" y="326" width="48" height="19" rx="4" fill="#ff4d4d"/>
+    <text x="54" y="339.5" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d1017">HIGH</text>
+    <text x="92" y="340" font-size="15" fill="#e6edf3">Dumpable .git repository</text>
+    <text x="360" y="340" font-size="14" fill="#6e7681">/.git/config</text>
+    <text x="600" y="340" font-size="12.5" fill="#565f6b">CWE-527 &#183; A05</text>
+  </g>
+  <g class="r" style="animation-delay:4.05s">
+    <rect x="30" y="358" width="48" height="19" rx="4" fill="#f5b301"/>
+    <text x="54" y="371.5" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d1017">MED</text>
+    <text x="92" y="372" font-size="15" fill="#e6edf3">CORS bypass (null origin)</text>
+    <text x="360" y="372" font-size="14" fill="#6e7681">/api</text>
+    <text x="600" y="372" font-size="12.5" fill="#565f6b">CWE-942 &#183; A05</text>
+  </g>
+  <g class="r" style="animation-delay:4.35s">
+    <rect x="30" y="390" width="48" height="19" rx="4" fill="#f5b301"/>
+    <text x="54" y="403.5" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d1017">MED</text>
+    <text x="92" y="404" font-size="15" fill="#e6edf3">AWS key in JS bundle</text>
+    <text x="360" y="404" font-size="14" fill="#6e7681">/static/app.js</text>
+    <text x="600" y="404" font-size="12.5" fill="#565f6b">CWE-798 &#183; A07</text>
+  </g>
+
+  <line class="r" style="animation-delay:4.7s" x1="30" y1="430" x2="850" y2="430" stroke="#1e222b" stroke-width="1"/>
+
+  <!-- summary -->
+  <g class="r" style="animation-delay:4.9s">
+    <text x="30" y="466" font-size="15" fill="#e6edf3">
+      <tspan fill="#ff5a5a" font-weight="bold">7 high</tspan>
+      <tspan fill="#8a94a6">   </tspan><tspan fill="#f5b301" font-weight="bold">6 medium</tspan>
+      <tspan fill="#8a94a6">   </tspan><tspan fill="#4db8ff" font-weight="bold">3 low</tspan>
+      <tspan fill="#565f6b">     58 checks &#183; OWASP + CWE mapped &#183; 1.8s</tspan>
+    </text>
+  </g>
+  <text class="r" style="animation-delay:5.15s" x="30" y="498" font-size="13.5" fill="#6e7681">every finding ships with the request that proves it and a fix &#8212; non-destructive by default</text>
+</svg>

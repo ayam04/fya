@@ -119,8 +119,8 @@ export default function Home() {
             <div className="mx-auto mt-16 max-w-3xl">
               <div className="rounded-2xl border border-line bg-surface/50 p-2 shadow-2xl shadow-black/60">
                 <img
-                  src="/demo.gif"
-                  alt="fya scanning a vulnerable web app in the terminal and finding XSS, SQL injection, CORS, CRLF, and an exposed .env"
+                  src="/demo.svg"
+                  alt="fya scanning a web app in the terminal and finding reflected XSS, SQL injection, SSRF, an exposed .git repo, and a CORS bypass, each mapped to OWASP and CWE"
                   className="w-full rounded-xl"
                 />
               </div>

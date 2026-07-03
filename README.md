@@ -18,7 +18,7 @@ A dynamic, target-adaptive security scanner for localhost servers and Android AP
 
 <br/>
 
-<img src="https://raw.githubusercontent.com/ayam04/fya/main/docs/demo.gif" alt="fya breaking a vulnerable web app" width="880"/>
+<img src="https://raw.githubusercontent.com/ayam04/fya/main/docs/demo.svg" alt="fya scanning a web app in the terminal: reflected XSS, SQL injection, SSRF, exposed .git, and CORS bypass, each mapped to OWASP and CWE" width="880"/>
 
 </div>
 
