@@ -41,30 +41,35 @@ _SECRET_PATTERNS = {
 
 _PLACEHOLDER = re.compile(r"(?i)(your|example|changeme|placeholder|xxxx|dummy|test|sample|\{\{|<|\$\{|env|process\.)")
 
+_INJECTION = "A03:2021 Injection"
+_CRYPTO = "A02:2021 Cryptographic Failures"
+_INTEGRITY = "A08:2021 Software and Data Integrity Failures"
+_MISCONFIG = "A05:2021 Security Misconfiguration"
+
 _DANGEROUS_PATTERNS = [
-    (re.compile(r"\beval\s*\("), "Use of eval()", Severity.HIGH, "CWE-95",
+    (re.compile(r"\beval\s*\("), "Use of eval()", Severity.HIGH, "CWE-95", _INJECTION,
      "Avoid eval on any input. Use safe parsers or explicit dispatch tables."),
-    (re.compile(r"\bexec\s*\("), "Use of exec()", Severity.HIGH, "CWE-95",
+    (re.compile(r"\bexec\s*\("), "Use of exec()", Severity.HIGH, "CWE-95", _INJECTION,
      "Avoid dynamic code execution. Refactor to call functions directly."),
-    (re.compile(r"subprocess\.\w+\([^)]*shell\s*=\s*True"), "Subprocess with shell=True", Severity.HIGH, "CWE-78",
+    (re.compile(r"subprocess\.\w+\([^)]*shell\s*=\s*True"), "Subprocess with shell=True", Severity.HIGH, "CWE-78", _INJECTION,
      "Pass an argument list and shell=False so input is never interpreted by a shell."),
-    (re.compile(r"os\.system\s*\("), "os.system() call", Severity.HIGH, "CWE-78",
+    (re.compile(r"os\.system\s*\("), "os.system() call", Severity.HIGH, "CWE-78", _INJECTION,
      "Use subprocess with an argument list instead of os.system."),
-    (re.compile(r"\bpickle\.loads?\s*\("), "Insecure deserialization (pickle)", Severity.HIGH, "CWE-502",
+    (re.compile(r"\bpickle\.loads?\s*\("), "Insecure deserialization (pickle)", Severity.HIGH, "CWE-502", _INTEGRITY,
      "Never unpickle untrusted data. Use JSON or a schema-validated format."),
-    (re.compile(r"yaml\.load\s*\((?![^)]*Loader)"), "yaml.load without SafeLoader", Severity.MEDIUM, "CWE-502",
+    (re.compile(r"yaml\.load\s*\((?![^)]*Loader)"), "yaml.load without SafeLoader", Severity.MEDIUM, "CWE-502", _INTEGRITY,
      "Use yaml.safe_load, or pass Loader=SafeLoader."),
-    (re.compile(r"verify\s*=\s*False"), "TLS certificate verification disabled", Severity.MEDIUM, "CWE-295",
+    (re.compile(r"verify\s*=\s*False"), "TLS certificate verification disabled", Severity.MEDIUM, "CWE-295", _CRYPTO,
      "Never disable TLS verification. Fix the trust store instead."),
-    (re.compile(r"\bDEBUG\s*=\s*True"), "Debug mode enabled", Severity.LOW, "CWE-489",
+    (re.compile(r"\bDEBUG\s*=\s*True"), "Debug mode enabled", Severity.LOW, "CWE-489", _MISCONFIG,
      "Ensure debug is disabled in production builds."),
-    (re.compile(r"hashlib\.md5\s*\(|hashlib\.sha1\s*\("), "Weak hash function", Severity.LOW, "CWE-327",
+    (re.compile(r"hashlib\.md5\s*\(|hashlib\.sha1\s*\("), "Weak hash function", Severity.LOW, "CWE-327", _CRYPTO,
      "Use SHA-256 or stronger; for passwords use bcrypt, scrypt, or argon2."),
-    (re.compile(r"dangerouslySetInnerHTML"), "React dangerouslySetInnerHTML", Severity.MEDIUM, "CWE-79",
+    (re.compile(r"dangerouslySetInnerHTML"), "React dangerouslySetInnerHTML", Severity.MEDIUM, "CWE-79", _INJECTION,
      "Sanitize HTML before injecting, or render as text."),
-    (re.compile(r"\.innerHTML\s*="), "Direct innerHTML assignment", Severity.LOW, "CWE-79",
+    (re.compile(r"\.innerHTML\s*=(?!=)"), "Direct innerHTML assignment", Severity.LOW, "CWE-79", _INJECTION,
      "Use textContent or a sanitizer to avoid DOM XSS."),
-    (re.compile(r"document\.write\s*\("), "document.write()", Severity.LOW, "CWE-79",
+    (re.compile(r"document\.write\s*\("), "document.write()", Severity.LOW, "CWE-79", _INJECTION,
      "Avoid document.write; build DOM nodes safely instead."),
 ]
 
@@ -158,7 +163,7 @@ class DangerousPatterns(Check):
                 stripped = line.lstrip()
                 if len(line) > 600 or stripped.startswith(("#", "//", "*", "/*")):
                     continue
-                for pattern, title, severity, cwe, remediation in _DANGEROUS_PATTERNS:
+                for pattern, title, severity, cwe, category, remediation in _DANGEROUS_PATTERNS:
                     if pattern.search(line):
                         emitted += 1
                         yield Finding(
@@ -166,10 +171,10 @@ class DangerousPatterns(Check):
                             title=f"{title} in {rel}",
                             severity=severity,
                             confidence=Confidence.LOW,
-                            category="A03:2021 Injection",
+                            category=category,
                             cwe=cwe,
                             description=f"{title} at {rel}:{lineno}. This construct is a common source of "
-                            "injection or unsafe-execution bugs and warrants review in context.",
+                            "security bugs and warrants review in context.",
                             remediation=remediation,
                             location=f"{rel}:{lineno}",
                             evidence=stripped[:160],
@@ -258,3 +263,86 @@ class StaticAnalysis(Check):
                 evidence=(item.get("code") or "").strip()[:200],
                 references=["https://bandit.readthedocs.io/"],
             )
+
+
+_PWN_TRIGGER = re.compile(r"\b(pull_request_target|workflow_run)\b")
+_CHECKOUT = re.compile(r"uses:\s*actions/checkout")
+_UNTRUSTED_REF = re.compile(r"ref:\s*\$\{\{\s*[^}]*(github\.event\.pull_request\.head|github\.head_ref)")
+_INJECT_EXPR = re.compile(
+    r"\$\{\{\s*[^}]*(github\.event\.(?:issue|pull_request|comment|review|discussion)\.[a-z_.]*(?:title|body|label|ref_name)"
+    r"|github\.head_ref)[^}]*\}\}"
+)
+
+
+@register
+class CicdMisconfig(Check):
+    name = "whitebox.cicd_misconfig"
+    title = "Dangerous CI workflow patterns"
+    target_kinds = (TargetKind.SOURCE,)
+    min_profile = Profile.PASSIVE
+
+    def run(self, ctx: ScanContext):
+        root = ctx.target.source_path
+        if not root:
+            return
+        wf_dir = os.path.join(root, ".github", "workflows")
+        if not os.path.isdir(wf_dir):
+            return
+        emitted = 0
+        for name in sorted(os.listdir(wf_dir)):
+            if emitted >= _MAX_PER_CHECK or not name.lower().endswith((".yml", ".yaml")):
+                continue
+            path = os.path.join(wf_dir, name)
+            try:
+                if os.path.getsize(path) > _MAX_FILE_BYTES:
+                    continue
+                with open(path, "r", encoding="utf-8", errors="ignore") as handle:
+                    text = handle.read()
+            except OSError:
+                continue
+            rel = os.path.relpath(path, root)
+
+            if _PWN_TRIGGER.search(text) and _CHECKOUT.search(text) and _UNTRUSTED_REF.search(text):
+                emitted += 1
+                yield Finding(
+                    check=self.name,
+                    title=f"GitHub Actions pwn-request in {rel}",
+                    severity=Severity.HIGH,
+                    confidence=Confidence.MEDIUM,
+                    category="A08:2021 Software and Data Integrity Failures",
+                    cwe="CWE-94",
+                    description=f"{rel} runs on pull_request_target/workflow_run and checks out the "
+                    "untrusted PR head ref, so code from a fork PR executes with repository secrets and a "
+                    "write-scoped token. This is the classic pwn-request supply-chain vulnerability.",
+                    remediation="Do not check out untrusted PR code in a privileged workflow; split into an "
+                    "untrusted build (pull_request) and a privileged step that only consumes artifacts.",
+                    location=rel,
+                    evidence="pull_request_target/workflow_run + checkout of untrusted head ref",
+                    references=["https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/"],
+                )
+                continue
+
+            for match in _INJECT_EXPR.finditer(text):
+                window = text[max(0, match.start() - 200):match.start()]
+                if "run:" not in window:
+                    continue
+                emitted += 1
+                yield Finding(
+                    check=self.name,
+                    title=f"GitHub Actions script injection in {rel}",
+                    severity=Severity.HIGH,
+                    confidence=Confidence.MEDIUM,
+                    category="A03:2021 Injection",
+                    cwe="CWE-94",
+                    description=f"{rel} interpolates an attacker-controllable expression "
+                    f"({match.group(0)[:80]}) directly into a shell 'run:' step. An attacker who controls "
+                    "that field (PR title, issue body, branch name, etc.) can inject shell commands into the "
+                    "runner.",
+                    remediation="Pass untrusted values through an intermediate env: variable and reference "
+                    "\"$VAR\" in the script, rather than interpolating ${{ ... }} directly into run:.",
+                    location=rel,
+                    evidence=match.group(0)[:160],
+                    references=["https://securitylab.github.com/resources/github-actions-untrusted-input/"],
+                )
+                break
+

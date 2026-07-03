@@ -6,7 +6,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 from ..models import Confidence, Finding, Profile, ScanContext, Severity, TargetKind
 from ..registry import Check, register
 
-_LINK_RE = re.compile(r"""<a\b[^>]*?\bhref\s*=\s*["']([^"'#>]+)["']""", re.IGNORECASE)
+_LINK_RE = re.compile(r"""<a\b[^>]*?\bhref\s*=\s*["']([^"'>]+)["']""", re.IGNORECASE)
 _FULL_FORM_RE = re.compile(r"<form\b[^>]*>.*?</form>", re.IGNORECASE | re.DOTALL)
 _FORM_BODY_RE = re.compile(r"<form\b[^>]*?>(.*?)</form>", re.IGNORECASE | re.DOTALL)
 _FORM_METHOD_RE = re.compile(r"""\bmethod\s*=\s*["']?\s*(post)\s*["']?""", re.IGNORECASE)
@@ -83,7 +83,7 @@ def _local_discover(ctx: ScanContext, cap: int):
         body = response.text or ""
 
         for href in _LINK_RE.findall(body):
-            absolute = urljoin(seed, href)
+            absolute = urljoin(seed, href).split("#", 1)[0]
             if not absolute.startswith(("http://", "https://")):
                 continue
             if not _same_host(absolute, host):
@@ -94,7 +94,7 @@ def _local_discover(ctx: ScanContext, cap: int):
             elif len(urls) < cap:
                 urls.setdefault(absolute, set())
 
-        for form_body in _FORM_BODY_RE.findall(body):
+        for form_body in _FULL_FORM_RE.findall(body):
             action_match = _FORM_ACTION_RE.search(form_body)
             action = action_match.group(1) if action_match else seed
             absolute = urljoin(seed, action or seed)
@@ -145,7 +145,7 @@ def _collect_post_forms(ctx: ScanContext, cap: int):
         body = response.text or ""
 
         for href in _LINK_RE.findall(body):
-            absolute = urljoin(url, href)
+            absolute = urljoin(url, href).split("#", 1)[0]
             if not absolute.startswith(("http://", "https://")):
                 continue
             if not _same_host(absolute, host):

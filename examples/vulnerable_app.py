@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import re
 import sqlite3
 
-from flask import Flask, Response, make_response, redirect, render_template_string, request
+from flask import Flask, Response, abort, make_response, redirect, render_template_string, request
 
 
 def create_app() -> Flask:
@@ -24,15 +25,26 @@ def create_app() -> Flask:
             "<a href='/user?id=1'>profile</a>"
             "<a href='/go?url=/'>home</a>"
             "<a href='/cors'>api</a>"
+            "<a href='/cors-strict'>cors2</a>"
+            "<a href='/reflect-host'>host</a>"
             "<a href='/greet?name=world'>greet</a>"
             "<a href='/transfer-form'>transfer</a>"
             "<a href='/link'>link</a>"
             "<a href='/setheader?lang=en'>setheader</a>"
             "<a href='/account?id=1'>account</a>"
             "<a href='/admin'>admin</a>"
+            "<a href='/fetch?url=http://example.com/logo.png'>fetch</a>"
+            "<a href='/items?category=food'>items</a>"
+            "<a href='/xpath?q=1'>xpath</a>"
+            "<a href='/ldap?u=admin'>ldap</a>"
+            "<a href='/ssi?tpl=hi'>ssi</a>"
         )
-        resp = make_response(f"<html><title>Vulnerable Shop</title><body>welcome {links}</body></html>")
+        resp = make_response(
+            f"<html><title>Vulnerable Shop</title><body>welcome {links}"
+            "<script src='/static/app.js'></script></body></html>"
+        )
         resp.set_cookie("session", "abc123")
+        resp.set_cookie("__Host-demo", "1", path="/")
         return resp
 
     @app.route("/search")
@@ -127,8 +139,133 @@ def create_app() -> Flask:
             except Exception:
                 resp.headers["Content-Language"] = "en"
         else:
-            resp.headers["Content-Language"] = lang
+            try:
+                lang.encode("latin-1")
+                resp.headers["Content-Language"] = lang
+            except UnicodeEncodeError:
+                resp.headers["Content-Language"] = "en"
         return resp
+
+    @app.before_request
+    def _honor_override():
+        override = request.headers.get("X-Original-URL") or request.headers.get("X-Rewrite-URL")
+        if override is not None and override.rstrip("/") not in ("",):
+            abort(404)
+
+    @app.route("/static/app.js")
+    def app_js():
+        js = (
+            "var AWS_KEY = 'AKIAIOSFODNN7EXAMPLE';\n"
+            "var config = { region: 'us-east-1' };\n"
+            "//# sourceMappingURL=app.js.map\n"
+        )
+        return Response(js, mimetype="application/javascript")
+
+    @app.route("/static/app.js.map")
+    def app_js_map():
+        return Response(
+            '{"version":3,"sources":["src/index.js"],"sourcesContent":["const secret = 1;"],"mappings":"AAAA"}',
+            mimetype="application/json",
+        )
+
+    @app.route("/.git/HEAD")
+    def git_head():
+        return Response("ref: refs/heads/main\n", mimetype="text/plain")
+
+    @app.route("/.git/config")
+    def git_config():
+        return Response("[core]\n\trepositoryformatversion = 0\n\tbare = false\n", mimetype="text/plain")
+
+    @app.route("/.env.production")
+    def env_prod():
+        return Response("DB_PASSWORD=hunter2\nAPI_KEY=sk_test_abcdef1234567890\n", mimetype="text/plain")
+
+    @app.route("/uploads/")
+    def uploads():
+        return Response(
+            "<html><head><title>Index of /uploads</title></head><body>"
+            "<h1>Index of /uploads</h1><pre><a href=\"../\">../</a>\n"
+            "<a href=\"backup.sql\">backup.sql</a>\n</pre></body></html>"
+        )
+
+    @app.route("/fetch")
+    def fetch():
+        url = request.args.get("url", "")
+        if "169.254.169.254" in url and "instance-identity" in url:
+            return Response(
+                '{"accountId":"123456789012","instanceId":"i-0abc123","region":"us-east-1","imageId":"ami-1"}',
+                mimetype="application/json",
+            )
+        if url.startswith("file://"):
+            if "passwd" in url:
+                return Response("root:x:0:0:root:/root:/bin/bash\n", mimetype="text/plain")
+            if "win.ini" in url:
+                return Response("[fonts]\n", mimetype="text/plain")
+        return Response("fetched: ok")
+
+    @app.route("/items")
+    def items():
+        if any("[$" in key for key in request.args.keys()):
+            return Response("<html><body>" + "<div>item</div>" * 60 + "</body></html>")
+        category = request.args.get("category", "")
+        return Response(f"<html><body><div>results for {category}</div></body></html>")
+
+    @app.route("/xpath")
+    def xpath():
+        q = request.args.get("q", "")
+        if "'" in q or '"' in q:
+            return Response("javax.xml.xpath.XPathExpressionException: invalid xpath expression", status=500)
+        return Response(f"<html><body>results for {q}</body></html>")
+
+    @app.route("/ldap")
+    def ldap():
+        u = request.args.get("u", "")
+        if "(" in u or ")" in u:
+            return Response("javax.naming.NamingException: bad search filter near ')(cn=*)'", status=500)
+        return Response(f"<html><body>user {u}</body></html>")
+
+    @app.route("/ssi")
+    def ssi():
+        tpl = request.args.get("tpl", "")
+        rendered = re.sub(r"<!--#echo[^>]*-->", "Wednesday, 02-Jul-2026 00:00:00 GMT", tpl)
+        return Response(f"<html><body>{rendered}</body></html>")
+
+    @app.route("/cors-strict")
+    def cors_strict():
+        origin = request.headers.get("Origin", "")
+        resp = make_response(Response('{"ok":true}', mimetype="application/json"))
+        host = request.host.split(":")[0]
+        if origin and origin.endswith(host):
+            resp.headers["Access-Control-Allow-Origin"] = origin
+            resp.headers["Access-Control-Allow-Credentials"] = "true"
+        return resp
+
+    @app.route("/reflect-host")
+    def reflect_host():
+        host = request.headers.get("X-Forwarded-Host") or request.host
+        return Response(f'<html><body><a href="http://{host}/next">next</a></body></html>')
+
+    @app.route("/graphql", methods=["GET", "POST"])
+    def graphql():
+        if request.method == "GET":
+            if "__typename" in request.args.get("query", ""):
+                return Response('{"data":{"__typename":"Query"}}', mimetype="application/json")
+            return Response("{}", mimetype="application/json")
+        data = request.get_json(silent=True)
+        if isinstance(data, list):
+            return Response(
+                '[{"data":{"__typename":"Query"}},{"data":{"__typename":"Query"}}]',
+                mimetype="application/json",
+            )
+        query = data.get("query", "") if isinstance(data, dict) else ""
+        if "__typenam" in query and "__typename" not in query:
+            return Response(
+                '{"errors":[{"message":"Cannot query field \\"__typenam\\". Did you mean \\"__typename\\"?"}]}',
+                mimetype="application/json",
+            )
+        if "__typename" in query:
+            return Response('{"data":{"__typename":"Query"}}', mimetype="application/json")
+        return Response('{"data":null}', mimetype="application/json")
 
     return app
 

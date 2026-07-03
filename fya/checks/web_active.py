@@ -7,8 +7,8 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 from ..models import Confidence, Finding, Profile, ScanContext, Severity, TargetKind
 from ..registry import Check, register
 
-_LINK_RE = re.compile(r"""<a\b[^>]*?\bhref\s*=\s*["']([^"'#>]+)["']""", re.IGNORECASE)
-_FORM_RE = re.compile(r"<form\b[^>]*?>(.*?)</form>", re.IGNORECASE | re.DOTALL)
+_LINK_RE = re.compile(r"""<a\b[^>]*?\bhref\s*=\s*["']([^"'>]+)["']""", re.IGNORECASE)
+_FORM_RE = re.compile(r"<form\b[^>]*?>.*?</form>", re.IGNORECASE | re.DOTALL)
 _FORM_ACTION_RE = re.compile(r"""\baction\s*=\s*["']([^"'>]*)["']""", re.IGNORECASE)
 _INPUT_NAME_RE = re.compile(r"""<(?:input|textarea|select)\b[^>]*?\bname\s*=\s*["']([^"'>]+)["']""", re.IGNORECASE)
 
@@ -126,7 +126,7 @@ def _discover(ctx: ScanContext, cap: int, extra_params: set):
         body = response.text or ""
 
         for match in _LINK_RE.findall(body):
-            absolute = urljoin(seed, match)
+            absolute = urljoin(seed, match).split("#", 1)[0]
             if not absolute.startswith(("http://", "https://")):
                 continue
             if not _same_host(absolute, host):
@@ -487,7 +487,7 @@ class SensitiveFileExposure(Check):
             if "text/html" in content_type and "<html" in body[:400].lower():
                 continue
             markers = _SENSITIVE_MARKERS.get(path, [])
-            plausible = (not markers) or any(m.lower() in body.lower() for m in markers) or bool(body.strip())
+            plausible = (not markers and bool(body.strip())) or any(m.lower() in body.lower() for m in markers)
             if not plausible:
                 continue
             yield Finding(

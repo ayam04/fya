@@ -22,6 +22,7 @@ need an `.apk`. A check runs only at or above its minimum profile.
 | Open redirect | medium | A01 Broken Access Control | CWE-601 |
 | Path traversal | high | A01 Broken Access Control | CWE-22 |
 | CORS misconfiguration | high | A05 Security Misconfiguration | CWE-942 |
+| Advanced CORS bypass (null origin, prefix/suffix match, scheme downgrade) | medium - high | A05 Security Misconfiguration | CWE-942 |
 | Dangerous HTTP methods | low - medium | A05 Security Misconfiguration | CWE-650 |
 | Sensitive file exposure (.env, .git, backups) | high | A05 Security Misconfiguration | CWE-538 |
 
@@ -33,6 +34,26 @@ need an `.apk`. A check runs only at or above its minimum profile.
 | Missing CSRF token | medium (confidence low) | A01 Broken Access Control | CWE-352 |
 | Host header injection | medium | A05 Security Misconfiguration | CWE-644 |
 | CRLF / header injection | high | A03 Injection | CWE-93 |
+| Unkeyed forwarded-header cache poisoning (X-Forwarded-Host) | medium - high | A05 Security Misconfiguration | CWE-644 |
+| X-Original-URL / X-Rewrite-URL access-control bypass | high | A01 Broken Access Control | CWE-284 |
+
+## Web secrets and files (min profile: safe)
+
+| Check | Severity | OWASP / MASVS | CWE |
+|-------|----------|---------------|-----|
+| Secrets in client-side JavaScript (AWS, Stripe, GitHub, private keys, etc.) | high - critical | A07 Identification and Authentication Failures | CWE-798 |
+| Exposed JavaScript source maps | low - medium | A05 Security Misconfiguration | CWE-540 |
+| Dumpable version-control repo (.git/.svn/.hg/.bzr) | high | A05 Security Misconfiguration | CWE-527 |
+| Exposed config / credential files (.env.*, appsettings, web.config, id_rsa, kubeconfig) | high | A05 Security Misconfiguration | CWE-538 |
+| Directory listing enabled | low - medium | A05 Security Misconfiguration | CWE-548 |
+
+## Web SSRF and injection (min profile: safe)
+
+| Check | Severity | OWASP / MASVS | CWE |
+|-------|----------|---------------|-----|
+| SSRF via cloud metadata and file:// (signature-based) | high - critical | A10 Server-Side Request Forgery | CWE-918 |
+| NoSQL injection (MongoDB operator, boolean differential) | high (confidence low - medium) | A03 Injection | CWE-943 |
+| XPath / LDAP / SSI injection (error signatures + reflection) | high | A03 Injection | CWE-643, 90, 97 |
 
 ## Web hardening (min profile: passive)
 
@@ -43,6 +64,8 @@ need an `.apk`. A check runs only at or above its minimum profile.
 | JWT missing expiry | low | A07 Identification and Authentication Failures | CWE-613 |
 | JWT sensitive claims | medium | A02 Cryptographic Failures | CWE-522 |
 | Outdated JS libraries | info - medium | A06 Vulnerable and Outdated Components | CWE-1104 |
+| Missing COOP / CORP / Permissions-Policy (HTML documents) | info - low | A05 Security Misconfiguration | CWE-693, 1021 |
+| Cookie prefix misuse (__Host-/__Secure-) and overly broad Domain | low - medium | A05 Security Misconfiguration | CWE-732 |
 | Missing security.txt | info | A05 Security Misconfiguration | none |
 | robots.txt discloses sensitive paths | low | A05 Security Misconfiguration | CWE-200 |
 
@@ -60,6 +83,7 @@ need an `.apk`. A check runs only at or above its minimum profile.
 |-------|----------|---------------|-----|
 | OpenAPI / Swagger exposure | medium | A05 Security Misconfiguration | CWE-200 |
 | GraphQL introspection enabled | medium | A05 Security Misconfiguration | CWE-200 |
+| GraphQL hardening (field suggestions, batching, GET/CSRF) | medium | A05 Security Misconfiguration | CWE-200, 770, 352 |
 | Verbose error disclosure | medium | A05 Security Misconfiguration | CWE-209 |
 | Unauthenticated admin / actuator endpoints | medium | A05 Security Misconfiguration | CWE-497 |
 
@@ -82,7 +106,8 @@ need an `.apk`. A check runs only at or above its minimum profile.
 | Check | Severity | OWASP / MASVS | CWE |
 |-------|----------|---------------|-----|
 | Hardcoded secrets in source (min profile: passive) | high | A07 Identification and Authentication Failures | CWE-798 |
-| Risky code patterns: eval, exec, shell=True, pickle, verify=False (min profile: passive) | low - high | A03 Injection | CWE-95, 78, 502, 295, 79 |
+| Risky code patterns: eval, exec, shell=True, pickle, verify=False (min profile: passive) | low - high | A03 Injection / A02 / A08 | CWE-95, 78, 502, 295, 79 |
+| Dangerous GitHub Actions workflows (pwn-request, script injection) (min profile: passive) | high | A08 Software and Data Integrity Failures | CWE-94 |
 | External static analysis via semgrep or bandit (min profile: safe) | info - high | A06 Vulnerable and Outdated Components | varies |
 
 ## APK static (min profile: passive)
@@ -92,6 +117,9 @@ need an `.apk`. A check runs only at or above its minimum profile.
 | Hardcoded secrets | high | MASVS-STORAGE | CWE-798 |
 | Cleartext HTTP endpoints | low | MASVS-NETWORK | CWE-319 |
 | Manifest issues (debuggable, allowBackup, exported, cleartext, minSdk, permissions) | info - high | MASVS-PLATFORM/STORAGE/NETWORK/CODE | CWE-489, 530, 319, 926 |
+| Unverified App Links (http/https without autoVerify) | medium | MASVS-PLATFORM | CWE-927 |
+| Exported component guarded by a weak custom permission | high | MASVS-PLATFORM | CWE-280 |
+| Insecure WebView (JavaScript bridge, file access) | medium - high | MASVS-PLATFORM | CWE-749 |
 
 ## External tools (optional, aggressive)
 

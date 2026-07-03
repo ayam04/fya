@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import tempfile
 import xml.etree.ElementTree as ET
 
 from ..models import Confidence, Finding, Profile, ScanContext, Severity, TargetKind
@@ -34,6 +37,23 @@ def _snippet(text, limit=400):
     if not text:
         return ""
     return text.strip()[:limit]
+
+
+def _run_to_file(build_args, prefix, timeout):
+    tmpdir = tempfile.mkdtemp(prefix=prefix)
+    out_path = os.path.join(tmpdir, "out.json")
+    try:
+        try:
+            run_tool(build_args(out_path), timeout=timeout)
+        except Exception:
+            return None
+        try:
+            with open(out_path, encoding="utf-8", errors="ignore") as handle:
+                return handle.read()
+        except OSError:
+            return None
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 @register
@@ -118,12 +138,12 @@ class NiktoScan(Check):
         base = ctx.target.base_url()
         if not base:
             return
-        args = [path, "-h", base, "-Format", "json", "-output", "-", "-nointeractive"]
-        try:
-            code, out, err = run_tool(args, timeout=300)
-        except Exception:
-            return
-        if not out:
+        out = _run_to_file(
+            lambda p: [path, "-h", base, "-Format", "json", "-output", p, "-nointeractive"],
+            "fya-nikto-",
+            timeout=300,
+        )
+        if not out or not out.strip():
             return
         try:
             data = json.loads(out)
@@ -341,12 +361,12 @@ class TlsScan(Check):
             yield from self._run_sslyze(sslyze, host, port)
 
     def _run_testssl(self, path, endpoint):
-        args = [path, "--jsonfile", "-", "--quiet", "--warnings", "off", endpoint]
-        try:
-            code, out, err = run_tool(args, timeout=300)
-        except Exception:
-            return
-        if not out:
+        out = _run_to_file(
+            lambda p: [path, "--jsonfile", p, "--quiet", "--warnings", "off", endpoint],
+            "fya-testssl-",
+            timeout=300,
+        )
+        if not out or not out.strip():
             return
         try:
             records = json.loads(out)

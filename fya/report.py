@@ -170,8 +170,7 @@ def to_markdown(result: ScanResult) -> str:
         f"- profile: `{result.profile.value}`",
         f"- duration: {result.duration_seconds():.1f}s",
         "- findings: "
-        + ", ".join(f"{counts[s.value]} {s.value}" for s in reversed(list(Severity)) if counts[s.value])
-        or "- findings: none",
+        + (", ".join(f"{counts[s.value]} {s.value}" for s in reversed(list(Severity)) if counts[s.value]) or "none"),
         "",
         "## Findings",
         "",

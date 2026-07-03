@@ -154,7 +154,8 @@ class GraphqlIntrospection(Check):
                 continue
             schema = None
             if isinstance(data, dict):
-                schema = (data.get("data") or {}).get("__schema")
+                inner = data.get("data")
+                schema = inner.get("__schema") if isinstance(inner, dict) else None
             if not isinstance(schema, dict):
                 continue
             yield Finding(
@@ -281,3 +282,116 @@ class ExposedAdminEndpoints(Check):
                 evidence=f"HTTP 200, content-type: {content_type}",
                 references=["https://owasp.org/www-community/Security_Misconfiguration"],
             )
+
+
+def _resolved_typename(response) -> bool:
+    if response is None or response.status_code != 200:
+        return False
+    if "json" not in response.headers.get("content-type", "").lower():
+        return False
+    try:
+        data = json.loads(response.text or "")
+    except (ValueError, TypeError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    inner = data.get("data")
+    return isinstance(inner, dict) and isinstance(inner.get("__typename"), str) and bool(inner.get("__typename"))
+
+
+@register
+class GraphqlHardening(Check):
+    name = "api.graphql_hardening"
+    title = "GraphQL hardening gaps"
+    target_kinds = (TargetKind.WEB,)
+    min_profile = Profile.SAFE
+
+    def run(self, ctx: ScanContext):
+        base = ctx.target.base_url()
+        if not base:
+            return
+        for path in _GRAPHQL_PATHS:
+            url = _join(base, path)
+            if not _resolved_typename(ctx.http.post(url, json={"query": "{__typename}"})):
+                continue
+
+            suggestion = ctx.http.post(url, json={"query": "query { __typenam }"})
+            if suggestion is not None:
+                try:
+                    sdata = json.loads(suggestion.text or "")
+                except (ValueError, TypeError):
+                    sdata = None
+                if isinstance(sdata, dict):
+                    errors = sdata.get("errors") or []
+                    messages = " ".join(
+                        str(e.get("message", "")) for e in errors if isinstance(e, dict)
+                    ).lower()
+                    if "did you mean" in messages:
+                        yield Finding(
+                            check=self.name,
+                            title="GraphQL field suggestions leak schema",
+                            severity=Severity.MEDIUM,
+                            confidence=Confidence.HIGH,
+                            category="A05:2021 Security Misconfiguration",
+                            cwe="CWE-200",
+                            description="The GraphQL endpoint returns 'Did you mean' field suggestions for "
+                            "mistyped fields. This lets an attacker reconstruct the schema field by field "
+                            "even when introspection is disabled.",
+                            remediation="Disable field suggestions in production (e.g. GraphQL-JS "
+                            "didYouMeanSuggestions off) alongside introspection.",
+                            location=url,
+                            evidence="response 'errors' contained a 'Did you mean' suggestion",
+                            references=["https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html"],
+                        )
+
+            batch = ctx.http.post(url, json=[{"query": "{__typename}"}, {"query": "{__typename}"}])
+            if batch is not None:
+                try:
+                    bdata = json.loads(batch.text or "")
+                except (ValueError, TypeError):
+                    bdata = None
+                if (
+                    isinstance(bdata, list)
+                    and len(bdata) == 2
+                    and all(
+                        isinstance(x, dict)
+                        and isinstance(x.get("data"), dict)
+                        and isinstance(x["data"].get("__typename"), str)
+                        for x in bdata
+                    )
+                ):
+                    yield Finding(
+                        check=self.name,
+                        title="GraphQL query batching enabled",
+                        severity=Severity.MEDIUM,
+                        confidence=Confidence.HIGH,
+                        category="A05:2021 Security Misconfiguration",
+                        cwe="CWE-770",
+                        description="The endpoint executed an array of two operations in one request. Query "
+                        "batching lets an attacker bypass per-request rate limiting and amplify brute-force "
+                        "or resource-exhaustion attacks.",
+                        remediation="Disable array-based batching or enforce per-operation cost and rate "
+                        "limits across a batch.",
+                        location=url,
+                        evidence="a 2-operation batch returned two resolved responses",
+                        references=["https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html"],
+                    )
+
+            if _resolved_typename(ctx.http.get(url + "?query=%7B__typename%7D")):
+                yield Finding(
+                    check=self.name,
+                    title="GraphQL executes queries over GET",
+                    severity=Severity.MEDIUM,
+                    confidence=Confidence.MEDIUM,
+                    category="A01:2021 Broken Access Control",
+                    cwe="CWE-352",
+                    description="The endpoint executed a GraphQL query sent as a GET request. GET-based "
+                    "execution is cacheable, leaks queries in logs, and is a precondition for CSRF against "
+                    "state-changing mutations.",
+                    remediation="Only accept GraphQL over POST with a JSON content type, and require a CSRF "
+                    "token or custom header.",
+                    location=url,
+                    evidence="GET ?query={__typename} resolved to JSON data",
+                    references=["https://portswigger.net/web-security/graphql"],
+                )
+            return

@@ -96,7 +96,7 @@ class ContentSecurityPolicyWeaknesses(Check):
                 "Remove data: from script-src so scripts can only load from trusted origins.",
                 f"script-src {' '.join(script_src)}",
             )
-        if "object-src" not in directives:
+        if "object-src" not in directives and "default-src" not in directives:
             yield self._finding(
                 base,
                 "CSP missing object-src directive",

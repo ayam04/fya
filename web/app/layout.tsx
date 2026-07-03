@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "fya - point it at your app, it tries to break it",
   description:
-    "An open-source security scanner that hunts your web app, Android APK, or source code the way an attacker would. 42 OWASP-mapped checks across black, gray, and white box, non-destructive, runs in your terminal or inside Claude.",
+    "An open-source security scanner that hunts your web app, Android APK, or source code the way an attacker would. 58 OWASP-mapped checks across black, gray, and white box, non-destructive, runs in your terminal or inside Claude.",
   metadataBase: new URL("https://github.com/ayam04/fya"),
   openGraph: {
     title: "fya",

@@ -11,6 +11,8 @@ def load(path: str) -> set:
         return set()
     if isinstance(data, dict):
         data = data.get("suppressed", [])
+    if not isinstance(data, list):
+        return set()
     ids = set()
     for item in data:
         if isinstance(item, str):

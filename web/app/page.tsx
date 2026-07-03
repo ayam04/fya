@@ -24,7 +24,7 @@ const features = [
     span: "md:col-span-3",
     tint: false,
     title: "Black, gray, and white box",
-    body: "42 checks across all three. Fuzz inputs from outside, probe access control with partial knowledge, or scan the source itself. Every finding maps to OWASP and a CWE.",
+    body: "58 checks across all three. Fuzz inputs from outside, probe access control with partial knowledge, or scan the source itself. Every finding maps to OWASP and a CWE.",
   },
   {
     Icon: MagnifyingGlass,
@@ -59,17 +59,16 @@ const steps = [
 ]
 
 const areas = [
-  ["Web passive", "Security headers, server and version disclosure, weak cookie flags."],
-  ["Web active", "Reflected XSS, error-based SQLi, open redirect, path traversal, CORS, dangerous methods, exposed files."],
-  ["Web advanced", "Server-side template injection, missing CSRF token, Host header injection, CRLF injection."],
-  ["Web hardening", "CSP holes, JWT algorithm and claims, outdated JS libraries, security.txt and robots.txt."],
-  ["Black box", "Input fuzzing and robustness: malformed, oversized, wrong-type, and unicode payloads that surface crashes and stack traces."],
-  ["Gray box", "Insecure direct object references and protected routes reachable without authentication."],
-  ["White box", "Point it at a source directory: hardcoded secrets, risky sinks, and semgrep or bandit folded in."],
-  ["TLS", "Certificate trust and expiry, weak protocol versions, missing HTTP to HTTPS upgrade."],
-  ["API", "OpenAPI and Swagger exposure, GraphQL introspection, verbose errors, unauthenticated admin endpoints."],
-  ["APK static", "Hardcoded secrets, cleartext endpoints, and manifest sins via androguard."],
-  ["Integrations", "Nuclei, Nikto, nmap, sqlmap, and testssl, folded into one report when installed."],
+  ["Web active", "Reflected XSS, error-based SQLi, open redirect, path traversal, CORS reflection, and advanced CORS bypasses (null origin, prefix and suffix match bugs)."],
+  ["Web advanced", "Server-side template injection, CSRF, Host header injection, CRLF, forwarded-header cache poisoning, and X-Original-URL access-control bypass."],
+  ["SSRF & injection", "Signature-based SSRF (cloud metadata and file://), MongoDB-style NoSQL injection, and XPath, LDAP, and SSI injection."],
+  ["Secrets & files", "Secrets in client-side JavaScript, exposed source maps, dumpable .git/.svn repos, leaked config and credential files, and directory listing."],
+  ["Web passive & hardening", "Security headers, cookie flags and prefix misuse, CSP holes, COOP/CORP/Permissions-Policy, JWT weaknesses, and outdated JS libraries."],
+  ["Black & gray box", "Input fuzzing that surfaces crashes and stack traces, insecure direct object references, and protected routes reachable without auth."],
+  ["White box (source)", "Point it at a directory: hardcoded secrets, risky sinks, dangerous GitHub Actions workflows, and semgrep or bandit folded in."],
+  ["API", "OpenAPI and Swagger exposure, GraphQL introspection, plus GraphQL field-suggestion leakage, batching, and GET/CSRF execution."],
+  ["Mobile (APK)", "Hardcoded secrets, cleartext endpoints, manifest sins, insecure WebView bridges, unverified App Links, and weak custom permissions."],
+  ["TLS & tools", "Certificate trust and expiry, weak protocols, and Nuclei, Nikto, nmap, sqlmap, and testssl folded into one report when installed."],
 ]
 
 const primaryBtn =

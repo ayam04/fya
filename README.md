@@ -61,7 +61,7 @@ instead of reinventing them.
 - **Adaptive.** Detects the stack, tunes payloads and request pacing, and runs only the checks that apply.
 - **You pick the mode.** Choose `recon`, `web`, `api`, `mobile`, `blackbox`, `graybox`, `whitebox`, or `full` (or an interactive menu), and watch a live per-category progress animation as it runs.
 - **Fits real apps and CI.** Authenticated scans (`--header`/`--cookie`/`--bearer`), scope and request-budget controls, an optional headless-browser crawler for single-page apps, and a baseline file to suppress known findings.
-- **42 checks, OWASP-mapped.** Web, API, TLS, black/gray-box, source static analysis, and APK, each tagged to OWASP Top 10 / MASVS and CWE, and grouped by test strategy in the report.
+- **58 checks, OWASP-mapped.** Web, API, TLS, black/gray-box, source static analysis, and APK, each tagged to OWASP Top 10 / MASVS and CWE, and grouped by test strategy in the report.
 - **Orchestrates, does not reinvent.** Uses Nuclei, Nikto, sqlmap, nmap, and testssl when present; falls back to built-in checks when not.
 - **Safe by default.** Non-destructive, no flooding, request pacing that backs off on errors, localhost allowed, remote requires explicit authorization.
 - **CI-ready reports.** Console, JSON, SARIF, Markdown, and self-contained HTML, with `--fail-on` exit codes.
@@ -160,21 +160,23 @@ adapts automatically, slowing down on errors, timeouts, and slow responses.
 
 ## What it checks
 
-42 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE,
+58 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE,
 and grouped by test strategy in the report. Full catalog in [docs/checks.md](docs/checks.md).
 
 | Area           | Checks |
 |----------------|--------|
 | Web (passive)  | Security headers, server/version disclosure, insecure cookie flags |
-| Web (active)   | Reflected XSS, error-based SQLi, open redirect, path traversal, CORS misconfiguration, dangerous HTTP methods, sensitive file exposure |
-| Web (advanced) | Server-side template injection (SSTI), missing CSRF token, Host header injection, CRLF/header injection |
-| Web (hardening) | CSP policy weaknesses, JWT (alg / expiry / sensitive claims), outdated JS libraries, security.txt and robots.txt |
+| Web (active)   | Reflected XSS, error-based SQLi, open redirect, path traversal, CORS misconfiguration, advanced CORS bypasses (null/prefix/suffix), dangerous HTTP methods, sensitive file exposure |
+| Web (advanced) | Server-side template injection (SSTI), missing CSRF token, Host header injection, CRLF/header injection, forwarded-header cache poisoning, X-Original-URL/X-Rewrite-URL access-control bypass |
+| Web (secrets & files) | Secrets in client-side JavaScript, exposed source maps, dumpable .git/.svn/.hg/.bzr repos, leaked config/credential files, directory listing |
+| Web (SSRF & injection) | SSRF via cloud metadata and file:// (signature-based), MongoDB-style NoSQL injection, XPath / LDAP / SSI injection |
+| Web (hardening) | CSP policy weaknesses, COOP/CORP/Permissions-Policy, cookie prefix and scope misuse, JWT (alg / expiry / sensitive claims), outdated JS libraries, security.txt and robots.txt |
 | Black box      | Input fuzzing and robustness: malformed, oversized, wrong-type, unicode, null-byte, and format-string payloads that surface 5xx crashes and leaked stack traces |
 | Gray box       | Insecure direct object references (IDOR), protected routes reachable without authentication |
-| White box (source) | Hardcoded secrets, risky sinks (eval, exec, shell=True, pickle, verify=False), semgrep/bandit folded in when installed |
+| White box (source) | Hardcoded secrets, risky sinks (eval, exec, shell=True, pickle, verify=False), dangerous GitHub Actions workflows (pwn-request, script injection), semgrep/bandit folded in when installed |
 | TLS           | Certificate validity and trust, weak protocol versions, missing HTTP to HTTPS upgrade |
-| API           | OpenAPI/Swagger exposure, GraphQL introspection, verbose error disclosure, unauthenticated admin/debug endpoints |
-| APK (static)  | Hardcoded secrets, cleartext HTTP endpoints, manifest issues (debuggable, backup, exported components, cleartext, minSdk, permissions) |
+| API           | OpenAPI/Swagger exposure, GraphQL introspection, GraphQL hardening (field suggestions, batching, GET/CSRF), verbose error disclosure, unauthenticated admin/debug endpoints |
+| APK (static)  | Hardcoded secrets, cleartext HTTP endpoints, manifest issues (debuggable, backup, exported, cleartext, minSdk, permissions, unverified App Links, weak custom permissions), insecure WebView configuration |
 | Integrations  | Nuclei, Nikto, nmap, sqlmap, testssl/sslyze handoff, normalized into the same report |
 
 Load, stress, and network-chaos testing are deliberately out of scope: they are

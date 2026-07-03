@@ -101,7 +101,7 @@ def _assess(lib: str, version):
             f"Handlebars {raw} is outdated and affected by prototype pollution issues",
             "Upgrade to the latest Handlebars 4.x release.",
         )
-    if lib == "lodash" and (major < 4 or (major == 4 and minor < 17)):
+    if lib == "lodash" and (major < 4 or (major == 4 and minor < 17) or (major == 4 and minor == 17 and patch < 21)):
         return (
             Severity.LOW,
             f"Lodash {raw} is outdated and affected by prototype pollution issues",
@@ -133,7 +133,7 @@ class FrontEndLibraries(Check):
             if not lib:
                 continue
             label = _LABELS[lib]
-            version = _parse_version(filename)
+            version = _parse_version(urlsplit(src).path) or _parse_version(urlsplit(src).query)
             if version is None:
                 if lib in info_emitted:
                     continue

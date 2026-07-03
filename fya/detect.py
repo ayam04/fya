@@ -23,6 +23,8 @@ def is_local(hostname: str) -> bool:
 
 
 def _looks_like_apk(path: str) -> bool:
+    if "://" in path:
+        return False
     if path.lower().endswith(".apk"):
         return True
     if os.path.isfile(path) and zipfile.is_zipfile(path):
@@ -50,7 +52,10 @@ def _web_target(raw: str) -> Target:
         scheme = "http" if is_local(hostname) else "https"
         candidate = f"{scheme}://{raw}"
     parsed = urlparse(candidate)
-    port = parsed.port
+    try:
+        port = parsed.port
+    except ValueError:
+        port = None
     if port is None:
         port = 80 if parsed.scheme == "http" else 443
     url = candidate.rstrip("/") or candidate

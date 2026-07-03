@@ -8,9 +8,21 @@ export const metadata = {
     "Install fya, scan a web server or an APK, run it as a Claude skill, pick a mode and profile, run authenticated and scoped scans, gate CI with a baseline, and read the full check catalog.",
 }
 
-const VERSION = "0.4.0"
+const VERSION = "0.5.0"
 
 const changelog = [
+  [
+    "0.5.0",
+    "16 new attack techniques and a codebase-wide bug sweep",
+    [
+      "New web checks: client-side JS secret exposure, exposed source maps, dumpable .git/.svn/.hg/.bzr repos, exposed config and credential files, directory listing, and advanced CORS bypasses (null origin, prefix/suffix match bugs).",
+      "New injection and SSRF checks: signature-based SSRF (cloud metadata and file://), MongoDB-style NoSQL injection, and XPath/LDAP/SSI injection.",
+      "New header checks: unkeyed forwarded-header cache poisoning, X-Original-URL/X-Rewrite-URL access-control bypass, missing COOP/CORP/Permissions-Policy, and cookie prefix and scope misuse.",
+      "New GraphQL hardening check: field-suggestion leakage, query batching, and GET/CSRF execution.",
+      "New mobile and source checks: insecure WebView JavaScript bridge, unverified App Links, weak custom-permission guards, and dangerous GitHub Actions workflow patterns (pwn-request and script injection).",
+      "Fixed 15 bugs found by an adversarial audit, including a CLI crash on malformed ports, false-positive sensitive-file detection, missed form-target and CDN-versioned library discovery, and two external-tool integrations (nikto, testssl) that silently never fired.",
+    ],
+  ],
   [
     "0.4.0",
     "Black, gray, and white-box test strategies",
@@ -69,15 +81,17 @@ const reports = [
 
 const checks = [
   ["Web passive", "passive", ["web.security_headers", "web.version_disclosure", "web.insecure_cookies"]],
-  ["Web active", "safe", ["web.reflected_xss", "web.sql_injection", "web.open_redirect", "web.path_traversal", "web.cors_misconfig", "web.dangerous_methods", "web.sensitive_files"]],
-  ["Web advanced", "safe / aggressive", ["web.ssti", "web.csrf", "web.host_header", "web.crlf"]],
-  ["Web hardening", "passive", ["web.csp_weaknesses", "web.jwt_weak_algorithm", "web.jwt_missing_expiry", "web.jwt_sensitive_claims", "web.frontend_libraries", "web.security_txt", "web.robots_sensitive_paths"]],
+  ["Web active", "safe", ["web.reflected_xss", "web.sql_injection", "web.open_redirect", "web.path_traversal", "web.cors_misconfig", "web.cors_advanced", "web.dangerous_methods", "web.sensitive_files"]],
+  ["Web advanced", "safe / aggressive", ["web.ssti", "web.csrf", "web.host_header", "web.crlf", "web.cache_poison_headers", "web.url_override_headers"]],
+  ["Web secrets & files", "safe", ["web.js_secrets", "web.source_map_exposure", "web.vcs_exposure", "web.exposed_config_secrets", "web.directory_listing"]],
+  ["Web SSRF & injection", "safe", ["web.ssrf", "web.nosql_injection", "web.xpath_ldap_ssi_injection"]],
+  ["Web hardening", "passive", ["web.csp_weaknesses", "web.jwt_weak_algorithm", "web.jwt_missing_expiry", "web.jwt_sensitive_claims", "web.frontend_libraries", "web.modern_headers", "web.cookie_scope", "web.security_txt", "web.robots_sensitive_paths"]],
   ["Black box", "safe", ["blackbox.input_fuzzing"]],
   ["Gray box", "safe", ["graybox.idor", "graybox.auth_bypass"]],
-  ["White box (source)", "passive / safe", ["whitebox.hardcoded_secrets", "whitebox.dangerous_patterns", "whitebox.static_analysis"]],
+  ["White box (source)", "passive / safe", ["whitebox.hardcoded_secrets", "whitebox.dangerous_patterns", "whitebox.cicd_misconfig", "whitebox.static_analysis"]],
   ["TLS", "passive", ["tls.certificate", "tls.weak_protocol", "tls.https_upgrade"]],
-  ["API", "safe", ["api.docs_exposure", "api.graphql_introspection", "api.verbose_errors", "api.admin_endpoints"]],
-  ["APK static", "passive", ["apk.hardcoded_secrets", "apk.cleartext_urls", "apk.manifest"]],
+  ["API", "safe", ["api.docs_exposure", "api.graphql_introspection", "api.graphql_hardening", "api.verbose_errors", "api.admin_endpoints"]],
+  ["APK static", "passive", ["apk.hardcoded_secrets", "apk.cleartext_urls", "apk.manifest", "apk.webview_config"]],
   ["Integrations", "aggressive", ["integrations.nuclei", "integrations.nikto", "integrations.nmap", "integrations.sqlmap", "integrations.tls"]],
 ]
 
@@ -257,8 +271,8 @@ export default function Docs() {
 
         <H2 id="checks">Checks catalog</H2>
         <p className={p}>
-          42 checks across eleven areas, each mapped to the OWASP Top 10 or MASVS and a CWE. Every check runs only
-          at or above its minimum profile.
+          58 checks across thirteen areas, each mapped to the OWASP Top 10 or MASVS and a CWE. Every check runs
+          only at or above its minimum profile.
         </p>
         <div className="space-y-4">
           {checks.map(([area, prof, names]) => (

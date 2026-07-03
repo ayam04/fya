@@ -87,6 +87,70 @@ If `semgrep` is on PATH, run `semgrep scan --config auto --json --quiet <dir>` a
 Else if `bandit` is present, `bandit -r -f json -q <dir>` for Python. Otherwise note that installing
 one enables deeper rule-based analysis, and rely on the built-in scans above.
 
+## Extended web, API, mobile, and source techniques
+
+All non-destructive. Every one uses a differential or a specific content signature, never a bare 200,
+to keep false positives near zero.
+
+### Client-side secrets and source maps
+Fetch the page, collect inline `<script>` bodies and same-origin `<script src>` bundles. Regex bundles
+for provider-anchored secrets (AWS `AKIA[0-9A-Z]{16}`, Stripe `sk_live_...`, GitHub `ghp_...`, SendGrid,
+private key blocks). Redact and treat live hits as compromised. Demote publishable keys (Stripe `pk_live_`,
+Google `AIza`, Firebase config) to low/info. For each `.js` bundle, read its `//# sourceMappingURL=` or
+probe `<bundle>.map`; confirm a real map by `json.loads` succeeding with `version` and `sources` keys.
+
+### VCS, config, and directory exposure
+First establish a soft-404 baseline: request a random path; if it 200s the server is a catch-all, abort.
+Then validate by content, not status: `/.git/index` starts with `DIRC`, `/.git/config` has `[core]` +
+`repositoryformatversion`, `/.svn/wc.db` starts with `SQLite format 3\x00`. Probe config/credential files
+(`/.env.production`, `/appsettings.json`, `/web.config`, `/.aws/credentials`, `/id_rsa`, `/.kube/config`)
+and require a file-type marker. Detect directory listing by two markers together: an "Index of /" heading
+and a `../` parent-directory back-link, with a random-directory negative control.
+
+### Advanced CORS
+Send a random control Origin first. If it is reflected verbatim, that is blanket reflection (already the
+basic CORS check), so stop. Only when the control is not reflected, send crafted origins and require an
+exact-match reflection: `https://<marker><host>` (suffix bug), `https://<host>.<marker>.example` (prefix
+bug), `https://<marker>.<host>` (arbitrary subdomain), `Origin: null`, and `http://<host>` (scheme
+downgrade). High severity only when Access-Control-Allow-Credentials is true.
+
+### SSRF (signature-based)
+For parameters that take URLs (by name or value), baseline with a benign in-scope URL, then inject cloud
+metadata (`http://169.254.169.254/latest/dynamic/instance-identity/document`) and `file:///etc/passwd`.
+Send these with redirects disabled (a redirect to the payload is open-redirect, not SSRF). Confirm only on
+a content signature returned inline that is absent from the baseline: AWS metadata tokens
+(accountId + instanceId + region) or `/etc/passwd` (`root:.*:0:0:`). Never treat the reflected payload as proof.
+
+### NoSQL / XPath / LDAP / SSI injection
+NoSQL: take two distinct random baselines for a param; if stable, send `param[$ne]=<rand>` (brackets raw)
+and flag when the response status or normalized length diverges from both baselines, rejecting reflected
+`$ne`. XPath/LDAP: inject `'"` / `)(cn=*)` and flag an engine error signature (org.apache.xpath,
+javax.naming.NamingException, bad search filter) absent from baseline. SSI: confirm the param reflects a
+plain HTML comment, then send `<!--#echo var="DATE_GMT"-->` and flag when the directive is consumed while
+the control comment survives.
+
+### Forwarded-header cache poisoning and URL override
+Add a unique `?fya_cb=<marker>` cache-buster to every probe so no shared cache entry is poisoned. Baseline
+without the header, then send `X-Forwarded-Host: <marker>.evil.example` and flag when the marker appears in
+the body, an absolute link, or the redirect Location and was absent from the baseline (high if cache
+indicators are present). For URL override, prove the app routes on `X-Original-URL`/`X-Rewrite-URL` with a
+four-request corroboration: baseline 2xx, header-to-bogus-path changes the response, the bogus path is
+absent directly, and header-to-root reproduces the baseline.
+
+### GraphQL hardening
+Gate on a confirmed endpoint (POST `{__typename}` resolves to a string). Then: a mistyped field
+(`{ __typenam }`) returning a "Did you mean" suggestion leaks the schema; a two-element query array that
+returns two resolved responses proves batching; a resolved `GET ?query={__typename}` proves GET/CSRF-able
+execution. Only ever send `__typename`; never a mutation.
+
+### Mobile (APK) and source
+WebView: scan `classes*.dex` strings for `addJavascriptInterface` + `setJavaScriptEnabled` (native bridge)
+and `setAllowUniversalAccessFromFileURLs`. Manifest: flag http/https BROWSABLE intent-filters without
+`android:autoVerify="true"` (hijackable App Links) and exported components guarded by an app-declared
+permission whose protectionLevel is not signature. Source (CI): in `.github/workflows/*.yml`, flag
+pull_request_target/workflow_run that checks out the untrusted PR head ref (pwn-request), and untrusted
+`${{ github.event.* }}` expressions interpolated into a `run:` shell step (script injection).
+
 ## Deliberately excluded: load, stress, network chaos
 
 Do not run load/stress tests (k6, JMeter, Locust patterns) or network-chaos tests (latency, packet
