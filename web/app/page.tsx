@@ -44,8 +44,8 @@ const features = [
     Icon: TerminalWindow,
     span: "md:col-span-2",
     tint: false,
-    title: "Yours, free, no leash",
-    body: "MIT licensed. No dashboard to buy, no agent, no account. It runs in your terminal or inside Claude.",
+    title: "Free for noncommercial use",
+    body: "Free for personal, hobby, research, and nonprofit use under PolyForm Noncommercial. Commercial use needs a license. No dashboard, no agent, no account.",
   },
 ]
 

@@ -51,6 +51,7 @@ const nav = [
   ["tools", "External tools"],
   ["docker", "Docker"],
   ["responsible", "Responsible use"],
+  ["license", "Licensing"],
 ]
 
 const modes = [
@@ -312,6 +313,21 @@ export default function Docs() {
           test. Scanning a non-local target requires <Code>--i-am-authorized</Code>. Scans are non-destructive by
           default, with no flooding and no denial-of-service payloads. You are responsible for how you use this
           tool.
+        </p>
+
+        <H2 id="license">Licensing</H2>
+        <p className={p}>
+          fya is dual-licensed. It is <b>free for noncommercial and personal use</b> under the{" "}
+          <a href="https://polyformproject.org/licenses/noncommercial/1.0.0" className="text-brand hover:brightness-110">
+            PolyForm Noncommercial License 1.0.0
+          </a>
+          , which covers hobby projects, research, education, personal study, and nonprofit or government use.
+        </p>
+        <p className={p}>
+          <b>Commercial use requires a paid license</b> — using fya in, or for, a for-profit company&apos;s products,
+          services, or internal operations. To obtain one, contact{" "}
+          <Code>ayamullahkhan04@gmail.com</Code>. Versions before 0.5.0 were released under the MIT License and remain
+          available under those terms.
         </p>
       </article>
     </div>

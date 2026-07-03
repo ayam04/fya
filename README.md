@@ -12,7 +12,7 @@ A dynamic, target-adaptive security scanner for localhost servers and Android AP
 [![CI](https://github.com/ayam04/fya/actions/workflows/ci.yml/badge.svg)](https://github.com/ayam04/fya/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/fya.svg)](https://pypi.org/project/fya/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue.svg)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -258,4 +258,9 @@ the tools it orchestrates ([Nuclei](https://github.com/projectdiscovery/nuclei),
 
 ## License
 
-[MIT](LICENSE).
+`fya` is **dual-licensed**:
+
+- **Free for noncommercial and personal use** under the [PolyForm Noncommercial License 1.0.0](LICENSE). Hobby projects, research, education, personal study, and nonprofit or government use are all free.
+- **Commercial use requires a paid license.** Using `fya` in, or for, a for-profit company's products, services, or internal operations needs a commercial license. Contact **ayamullahkhan04@gmail.com**.
+
+Versions before 0.5.0 were released under the MIT License and remain available under those terms.

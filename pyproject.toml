@@ -11,14 +11,14 @@ dynamic = ["version"]
 description = "Point it at your app, it tries to break it. A dynamic security scanner for localhost servers and Android APKs."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
-authors = [{ name = "FYA contributors" }]
+license = { file = "LICENSE" }
+authors = [{ name = "Ayamullah Khan", email = "ayamullahkhan04@gmail.com" }]
 keywords = ["security", "dast", "pentest", "vulnerability-scanner", "owasp", "apk", "appsec"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Programming Language :: Python :: 3",
     "Topic :: Security",
 ]
