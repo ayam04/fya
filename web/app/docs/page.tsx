@@ -1,5 +1,6 @@
 import { CodeBlock } from "@/components/CodeBlock"
 import { Callout } from "@/components/Callout"
+import { DocsMobileNav } from "@/components/DocsMobileNav"
 
 export const metadata = {
   title: "fya docs - usage and reference",
@@ -86,7 +87,7 @@ function Code({ children }: { children: React.ReactNode }) {
 
 function H2({ id, children }: { id: string; children: string }) {
   return (
-    <h2 id={id} className="font-display mt-16 mb-4 scroll-mt-28 border-b border-line pb-2 text-2xl font-semibold tracking-tight">
+    <h2 id={id} className="font-display mt-16 mb-4 scroll-mt-36 border-b border-line pb-2 text-2xl font-semibold tracking-tight lg:scroll-mt-28">
       {children}
     </h2>
   )
@@ -112,6 +113,7 @@ export default function Docs() {
       </aside>
 
       <article className="min-w-0 max-w-3xl">
+        <DocsMobileNav items={nav} />
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-4xl font-semibold tracking-tight">Documentation</h1>
           <a
