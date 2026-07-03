@@ -182,6 +182,10 @@ def _run_scan(args) -> int:
             f"[grey50]authorized:[/] {reason}    "
             f"[grey50]mode[/] [bold]{args.mode}[/]    [grey50]profile[/] [bold]{profile}[/]"
         )
+        console.print(
+            "[grey37]noncommercial and personal use is free; commercial use requires a license "
+            "(ayamullahkhan04@gmail.com)[/]"
+        )
 
     def log(message: str) -> None:
         if args.verbose:

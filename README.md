@@ -261,6 +261,6 @@ the tools it orchestrates ([Nuclei](https://github.com/projectdiscovery/nuclei),
 `fya` is **dual-licensed**:
 
 - **Free for noncommercial and personal use** under the [PolyForm Noncommercial License 1.0.0](LICENSE). Hobby projects, research, education, personal study, and nonprofit or government use are all free.
-- **Commercial use requires a paid license.** Using `fya` in, or for, a for-profit company's products, services, or internal operations needs a commercial license. Contact **ayamullahkhan04@gmail.com**.
+- **Commercial use requires a paid license.** Using `fya` in, or for, a for-profit company's products, services, or internal operations needs a commercial license. See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) and contact **ayamullahkhan04@gmail.com**.
 
 Versions before 0.5.0 were released under the MIT License and remain available under those terms.
