@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0a0b0d;
-  --color-surface: #121419;
-  --color-surface2: #171a20;
+  --color-bg: #08090c;
+  --color-surface: #111318;
+  --color-surface2: #171a21;
   --color-line: #1e222b;
+  --color-line-strong: #2c323e;
   --color-ink: #ededf0;
   --color-muted: #9294a0;
   --color-brand: #ff4d4d;
   --color-brand2: #ff7a45;
+  --color-ok: #4ade80;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-grotesk), var(--font-inter), sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
@@ -32,30 +34,47 @@ body {
   background: rgba(255, 77, 77, 0.3);
 }
 
-.font-display {
-  font-family: var(--font-display);
+/* Keyboard users need to see where they are. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+  border-radius: 8px;
 }
 
-.bg-grid {
-  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
-  background-size: 24px 24px;
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.028em;
+}
+
+/* Scanlines, not a generic dot grid: the hero's subject is a terminal. */
+.bg-scan {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.03) 0 1px,
+    transparent 1px 4px
+  );
+  mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
 }
 
 .hero-glow {
-  background: radial-gradient(58% 50% at 50% 0%, rgba(255, 77, 77, 0.2), transparent 72%);
+  background: radial-gradient(58% 46% at 50% 0%, rgba(255, 77, 77, 0.18), transparent 70%);
 }
 
-.text-gradient {
-  background: linear-gradient(90deg, #ff5a5a, #ff8a4c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* One elevation system: a lifted panel gets a shadow and a hairline top highlight, never a full border too. */
+.panel-raised {
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 24px 60px -24px rgba(0, 0, 0, 0.9);
+}
+
+.rule-fade {
+  background: linear-gradient(90deg, transparent, var(--color-line-strong) 18%, var(--color-line-strong) 82%, transparent);
 }
 
 @keyframes fadeup {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -68,7 +87,7 @@ body {
 }
 
 .reveal.in {
-  animation: fadeup 0.6s cubic-bezier(0.2, 0.65, 0.3, 1) forwards;
+  animation: fadeup 0.7s cubic-bezier(0.16, 0.84, 0.28, 1) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

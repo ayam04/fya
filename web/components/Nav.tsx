@@ -15,6 +15,9 @@ export function Nav() {
           <Link href="/#skill" className="hidden rounded-full px-3.5 py-1.5 text-muted transition-colors hover:text-ink sm:block">
             Claude skill
           </Link>
+          <Link href="/changelog" className="hidden rounded-full px-3.5 py-1.5 text-muted transition-colors hover:text-ink sm:block">
+            Changelog
+          </Link>
           <Link href="/docs" className="rounded-full px-3.5 py-1.5 text-muted transition-colors hover:text-ink">
             Docs
           </Link>

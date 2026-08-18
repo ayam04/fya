@@ -50,6 +50,23 @@ _ACTIVE_CHECKS = {
     "web.open_redirect",
     "web.cors_misconfig",
     "web.csrf",
+    # Every dynamic check added since. A hardened app must stay silent for all of them;
+    # this is the guard that stops a new check from shipping as a false-positive engine.
+    "api.actuator_exposure",
+    "api.oidc_misconfig",
+    "api.soap_wsdl_exposure",
+    "tls.certificate_strength",
+    "web.backup_files",
+    "web.blind_sql_injection",
+    "web.command_injection",
+    "web.debug_info_pages",
+    "web.json_nosql_operators",
+    "web.jwt_header_injection",
+    "web.jwt_weak_secret",
+    "web.lfi_wrappers",
+    "web.mixed_content",
+    "web.serialized_objects",
+    "web.xxe_injection",
 }
 
 

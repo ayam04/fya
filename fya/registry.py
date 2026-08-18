@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
-from typing import Iterable, List, Type
+from typing import Any, Iterable, List, Type
 
 from .models import Finding, Profile, ScanContext, profile_rank
 
@@ -40,7 +40,7 @@ def _load_plugins() -> None:
     except ImportError:
         return
     try:
-        eps = entry_points()
+        eps: Any = entry_points()
         selected = eps.select(group="fya.checks") if hasattr(eps, "select") else eps.get("fya.checks", [])
     except Exception:
         return

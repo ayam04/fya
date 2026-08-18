@@ -13,7 +13,7 @@ _EXT_FORMAT = {".json": "json", ".sarif": "sarif", ".md": "markdown", ".html": "
 
 ALL_CATEGORIES = {"web", "tls", "api", "apk", "integrations", "blackbox", "graybox", "whitebox"}
 
-MODES = {
+MODES: dict = {
     "auto": {"categories": None, "profile": None},
     "recon": {"categories": {"web", "tls", "apk"}, "profile": "passive"},
     "web": {"categories": {"web", "tls", "api"}, "profile": None},
@@ -71,8 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="pick the mode and profile from a menu before scanning",
     )
-    scan.add_argument("--only", help="comma-separated categories to include (web,tls,api,apk,integrations,blackbox,graybox,whitebox)")
-    scan.add_argument("--skip", help="comma-separated categories to exclude")
+    scan.add_argument("--only", help="comma-separated categories (web,tls,api,apk,integrations,blackbox,graybox,whitebox) or single check ids (web.ssrf) to include")
+    scan.add_argument("--skip", help="comma-separated categories or single check ids to exclude")
     scan.add_argument(
         "--profile",
         choices=[p.value for p in Profile],
@@ -108,6 +108,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("tools", help="list external security tools fya can use")
     sub.add_parser("modes", help="list the available scan modes")
+
+    checks = sub.add_parser("checks", help="list every check fya can run")
+    checks.add_argument("--only", help="comma-separated categories to list (" + ",".join(sorted(ALL_CATEGORIES)) + ")")
+    checks.add_argument("--json", action="store_true", help="emit the catalog as JSON")
     return parser
 
 
@@ -128,19 +132,29 @@ def _pick_interactive(console, args) -> None:
     )
 
 
-def _resolve_scope(args) -> tuple[str, set]:
+def _resolve_scope(args) -> tuple:
+    """Resolve mode/--only/--skip into (profile, categories, exclude).
+
+    A selector is either a category ("web") or a single check id ("web.ssrf").
+    """
     mode = MODES[args.mode]
     profile = args.profile or mode["profile"] or Profile.SAFE.value
 
     categories = mode["categories"]
     if args.only:
         categories = {c.strip() for c in args.only.split(",") if c.strip()}
+
+    exclude = set()
     if args.skip:
-        base = set(categories) if categories else set(ALL_CATEGORIES)
-        categories = base - {c.strip() for c in args.skip.split(",") if c.strip()}
+        skipped = {c.strip() for c in args.skip.split(",") if c.strip()}
+        exclude = {c for c in skipped if "." in c}
+        dropped_categories = skipped - exclude
+        if dropped_categories:
+            base = set(categories) if categories else set(ALL_CATEGORIES)
+            categories = base - dropped_categories
     if categories is not None and set(categories) == ALL_CATEGORIES:
         categories = None
-    return profile, categories
+    return profile, categories, exclude
 
 
 def _parse_headers(pairs):
@@ -175,7 +189,7 @@ def _run_scan(args) -> int:
 
     if args.interactive and sys.stdin.isatty():
         _pick_interactive(console, args)
-    profile, categories = _resolve_scope(args)
+    profile, categories, exclude = _resolve_scope(args)
 
     if not args.quiet:
         console.print(
@@ -212,6 +226,7 @@ def _run_scan(args) -> int:
         log=log,
         detect_external=not args.no_tools,
         categories=categories,
+        exclude=exclude,
     )
 
     if animate:
@@ -323,6 +338,47 @@ def _list_modes() -> int:
     return 0
 
 
+def _list_checks(args) -> int:
+    import json
+
+    from rich.console import Console
+    from rich.table import Table
+
+    from .registry import all_checks
+
+    wanted = {c.strip() for c in (args.only or "").split(",") if c.strip()}
+    rows: list = []
+    for cls in all_checks():
+        category = cls.name.split(".")[0]
+        if wanted and category not in wanted:
+            continue
+        rows.append(
+            {
+                "name": cls.name,
+                "category": category,
+                "title": cls.title,
+                "targets": [k.value for k in cls.target_kinds] or ["any"],
+                "min_profile": cls.min_profile.value,
+            }
+        )
+    rows.sort(key=lambda r: r["name"])
+
+    if args.json:
+        print(json.dumps(rows, indent=2))
+        return 0
+
+    console = Console()
+    table = Table(title=f"fya checks ({len(rows)})", border_style="grey37", header_style="bold")
+    table.add_column("check")
+    table.add_column("targets", style="grey62")
+    table.add_column("profile", style="grey62")
+    table.add_column("what it looks for", style="grey62")
+    for row in rows:
+        table.add_row(row["name"], ",".join(row["targets"]), row["min_profile"], row["title"])
+    console.print(table)
+    return 0
+
+
 def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -335,6 +391,8 @@ def main(argv=None) -> int:
         return _list_tools()
     if args.command == "modes":
         return _list_modes()
+    if args.command == "checks":
+        return _list_checks(args)
     parser.print_help()
     return 0
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from typing import Optional
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
 from ..models import Confidence, Finding, Profile, ScanContext, Severity, TargetKind
@@ -32,7 +33,7 @@ _SAFE_CAP = 20
 _AGGRESSIVE_CAP = 50
 
 
-def _same_host(url: str, host: str) -> bool:
+def _same_host(url: str, host: Optional[str]) -> bool:
     try:
         parsed = urlparse(url)
     except ValueError:
@@ -124,7 +125,7 @@ def _local_discover(ctx: ScanContext, cap: int):
 def _collect_post_forms(ctx: ScanContext, cap: int):
     base = ctx.target.base_url()
     host = ctx.target.host
-    forms = []
+    forms: list = []
     seeds = []
     if base:
         seeds.append(base)

@@ -56,7 +56,6 @@ testpaths = ["tests"]
 addopts = "-q"
 
 [tool.mypy]
-python_version = "3.9"
 files = ["fya"]
 ignore_missing_imports = true
 warn_redundant_casts = true

@@ -107,8 +107,8 @@ class ClientSideSecrets(Check):
                 )
                 break
             for label, pattern in _PUBLISHABLE:
-                match = pattern.search(body)
-                if match and (label, "pub") not in seen:
+                pub = pattern.search(body)
+                if pub and (label, "pub") not in seen:
                     seen.add((label, "pub"))
                     emitted += 1
                     yield Finding(
@@ -123,7 +123,7 @@ class ClientSideSecrets(Check):
                         "or referrer restrictions are in place.",
                         remediation="Apply HTTP referrer, domain, or scope restrictions to the key.",
                         location=url,
-                        evidence=f"{label}: {_redact(match.group(0))}",
+                        evidence=f"{label}: {_redact(pub.group(0))}",
                         references=["https://cwe.mitre.org/data/definitions/200.html"],
                     )
             if not firebase_flagged and "apiKey" in body:

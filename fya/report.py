@@ -45,7 +45,7 @@ _GROUP_LABEL = {
 
 
 def _grouped(result: ScanResult):
-    buckets = {}
+    buckets: dict = {}
     for f in result.sorted_findings():
         buckets.setdefault(f.check.split(".")[0], []).append(f)
     ordered = [(g, buckets.pop(g)) for g in _GROUP_ORDER if g in buckets]

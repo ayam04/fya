@@ -18,6 +18,9 @@ export function Footer() {
           <a href="/docs" className="transition-colors hover:text-ink">
             Docs
           </a>
+          <a href="/changelog" className="transition-colors hover:text-ink">
+            Changelog
+          </a>
         </div>
       </div>
     </footer>

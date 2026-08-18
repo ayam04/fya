@@ -84,15 +84,21 @@ const checks = [
   ["Web passive", "passive", ["web.security_headers", "web.version_disclosure", "web.insecure_cookies"]],
   ["Web active", "safe", ["web.reflected_xss", "web.sql_injection", "web.open_redirect", "web.path_traversal", "web.cors_misconfig", "web.cors_advanced", "web.dangerous_methods", "web.sensitive_files"]],
   ["Web advanced", "safe / aggressive", ["web.ssti", "web.csrf", "web.host_header", "web.crlf", "web.cache_poison_headers", "web.url_override_headers"]],
-  ["Web secrets & files", "safe", ["web.js_secrets", "web.source_map_exposure", "web.vcs_exposure", "web.exposed_config_secrets", "web.directory_listing"]],
+  ["Web advanced injection", "safe / aggressive", ["web.command_injection", "web.xxe_injection", "web.blind_sql_injection", "web.lfi_wrappers", "web.json_nosql_operators"]],
   ["Web SSRF & injection", "safe", ["web.ssrf", "web.nosql_injection", "web.xpath_ldap_ssi_injection"]],
+  ["Web secrets & files", "safe", ["web.js_secrets", "web.source_map_exposure", "web.vcs_exposure", "web.exposed_config_secrets", "web.directory_listing"]],
+  ["Web exposure & debug", "safe / aggressive", ["web.debug_info_pages", "web.backup_files"]],
+  ["Web crypto & tokens", "safe", ["web.jwt_weak_secret", "web.jwt_header_injection", "web.mixed_content", "web.serialized_objects"]],
   ["Web hardening", "passive", ["web.csp_weaknesses", "web.jwt_weak_algorithm", "web.jwt_missing_expiry", "web.jwt_sensitive_claims", "web.frontend_libraries", "web.modern_headers", "web.cookie_scope", "web.security_txt", "web.robots_sensitive_paths"]],
   ["Black box", "safe", ["blackbox.input_fuzzing"]],
   ["Gray box", "safe", ["graybox.idor", "graybox.auth_bypass"]],
-  ["White box (source)", "passive / safe", ["whitebox.hardcoded_secrets", "whitebox.dangerous_patterns", "whitebox.cicd_misconfig", "whitebox.static_analysis"]],
-  ["TLS", "passive", ["tls.certificate", "tls.weak_protocol", "tls.https_upgrade"]],
-  ["API", "safe", ["api.docs_exposure", "api.graphql_introspection", "api.graphql_hardening", "api.verbose_errors", "api.admin_endpoints"]],
+  ["White box (source)", "passive / safe", ["whitebox.hardcoded_secrets", "whitebox.dangerous_patterns", "whitebox.cicd_misconfig", "whitebox.static_analysis", "whitebox.committed_key_material", "whitebox.weak_crypto_usage", "whitebox.sql_string_building", "whitebox.auth_verification_disabled"]],
+  ["White box (IaC & supply chain)", "passive", ["whitebox.dockerfile_hardening", "whitebox.compose_hardening", "whitebox.k8s_workload_security", "whitebox.terraform_exposure", "whitebox.insecure_package_source", "whitebox.actions_supply_chain"]],
+  ["TLS", "passive", ["tls.certificate", "tls.weak_protocol", "tls.https_upgrade", "tls.certificate_strength"]],
+  ["API", "safe", ["api.docs_exposure", "api.graphql_introspection", "api.graphql_hardening", "api.verbose_errors", "api.admin_endpoints", "api.actuator_exposure", "api.oidc_misconfig", "api.soap_wsdl_exposure"]],
   ["APK static", "passive", ["apk.hardcoded_secrets", "apk.cleartext_urls", "apk.manifest", "apk.webview_config"]],
+  ["APK manifest & config", "passive", ["apk.network_security_config", "apk.provider_exposure", "apk.backup_rules", "apk.deeplink_surface", "apk.signing_scheme"]],
+  ["APK code & build", "passive", ["apk.weak_crypto", "apk.insecure_tls_code", "apk.build_hardening"]],
   ["Integrations", "aggressive", ["integrations.nuclei", "integrations.nikto", "integrations.nmap", "integrations.sqlmap", "integrations.tls"]],
 ]
 
@@ -272,7 +278,7 @@ export default function Docs() {
 
         <H2 id="checks">Checks catalog</H2>
         <p className={p}>
-          58 checks across thirteen areas, each mapped to the OWASP Top 10 or MASVS and a CWE. Every check runs
+          91 checks across 19 areas, each mapped to the OWASP Top 10 or MASVS and a CWE. Every check runs
           only at or above its minimum profile.
         </p>
         <div className="space-y-4">

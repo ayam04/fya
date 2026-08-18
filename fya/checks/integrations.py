@@ -155,7 +155,7 @@ class NiktoScan(Check):
                 data = json.loads(out[start:])
             except (ValueError, TypeError):
                 return
-        vulns = []
+        vulns: list = []
         if isinstance(data, dict):
             vulns = data.get("vulnerabilities") or []
         elif isinstance(data, list):
@@ -221,8 +221,8 @@ class NmapScan(Check):
                     continue
                 portid = port.get("portid")
                 try:
-                    number = int(portid)
-                except (TypeError, ValueError):
+                    number = int(portid) if portid else None
+                except ValueError:
                     number = None
                 service_el = port.find("service")
                 service = service_el.get("name") if service_el is not None else ""

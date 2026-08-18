@@ -41,12 +41,12 @@
   <text class="r" style="animation-delay:1s" x="30" y="128" font-size="14" fill="#8a94a6">authorized: local target 127.0.0.1    mode auto    profile safe</text>
 
   <!-- scanning + progress -->
-  <text class="r" style="animation-delay:1.35s" x="30" y="156" font-size="14" fill="#6e7681">fingerprinting Flask/Werkzeug &#183; planning 58 checks</text>
+  <text class="r" style="animation-delay:1.35s" x="30" y="156" font-size="14" fill="#6e7681">fingerprinting Flask/Werkzeug &#183; planning 55 checks</text>
   <rect x="30" y="168" width="380" height="7" rx="3.5" fill="#1e222b"/>
   <rect x="30" y="168" width="0" height="7" rx="3.5" fill="#ff4d4d">
     <animate attributeName="width" from="0" to="380" begin="1.5s" dur="1s" fill="freeze"/>
   </rect>
-  <text class="r" style="animation-delay:2.35s" x="420" y="175" font-size="12.5" fill="#6e7681">58/58</text>
+  <text class="r" style="animation-delay:2.35s" x="420" y="175" font-size="12.5" fill="#6e7681">55/55</text>
 
   <!-- findings header -->
   <text class="r" style="animation-delay:2.55s" x="30" y="214" font-size="12" letter-spacing="1.5" fill="#6e7681">FINDINGS</text>
@@ -103,7 +103,7 @@
       <tspan fill="#ff5a5a" font-weight="bold">7 high</tspan>
       <tspan fill="#8a94a6">   </tspan><tspan fill="#f5b301" font-weight="bold">6 medium</tspan>
       <tspan fill="#8a94a6">   </tspan><tspan fill="#4db8ff" font-weight="bold">3 low</tspan>
-      <tspan fill="#565f6b">     58 checks &#183; OWASP + CWE mapped &#183; 1.8s</tspan>
+      <tspan fill="#565f6b">     55 checks &#183; OWASP + CWE mapped &#183; 1.8s</tspan>
     </text>
   </g>
   <text class="r" style="animation-delay:5.15s" x="30" y="498" font-size="13.5" fill="#6e7681">every finding ships with the request that proves it and a fix &#8212; non-destructive by default</text>

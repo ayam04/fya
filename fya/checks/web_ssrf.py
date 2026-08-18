@@ -38,6 +38,8 @@ class SSRF(Check):
     def run(self, ctx: ScanContext):
         cap = _AGGRESSIVE_CRAWL_CAP if ctx.profile is Profile.AGGRESSIVE else _SAFE_CRAWL_CAP
         benign = ctx.target.base_url()
+        if not benign:
+            return
         emitted = 0
         seen = set()
         for url, params in _discover(ctx, cap, set()):

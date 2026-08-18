@@ -20,6 +20,7 @@ def run_scan(
     categories: Optional[set] = None,
     on_plan: Optional[Callable] = None,
     on_check_done: Optional[Callable] = None,
+    exclude: Optional[set] = None,
 ) -> ScanResult:
     options = dict(options or {})
     result = ScanResult(target=target, profile=profile)
@@ -70,9 +71,15 @@ def run_scan(
                 log("spa requested but playwright is not installed (pip install 'fya[browser]')")
 
     checks = applicable_checks(ctx)
+    # A selector is either a category ("web") or a single check id ("web.ssrf").
     if categories:
         allowed = set(categories)
-        checks = [c for c in checks if c.name.split(".")[0] in allowed]
+        checks = [c for c in checks if c.name.split(".")[0] in allowed or c.name in allowed]
+    if exclude:
+        blocked = set(exclude)
+        checks = [
+            c for c in checks if c.name.split(".")[0] not in blocked and c.name not in blocked
+        ]
     result.checks_run = sorted(c.name for c in checks)
     if on_plan:
         on_plan(list(checks))

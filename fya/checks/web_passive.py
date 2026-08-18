@@ -60,6 +60,8 @@ class SecurityHeaders(Check):
 
     def run(self, ctx: ScanContext):
         base = ctx.target.base_url()
+        if not base:
+            return
         response = ctx.http.get(base)
         if response is None:
             return
@@ -95,6 +97,8 @@ class ServerDisclosure(Check):
 
     def run(self, ctx: ScanContext):
         base = ctx.target.base_url()
+        if not base:
+            return
         response = ctx.http.get(base)
         if response is None:
             return
@@ -126,6 +130,8 @@ class InsecureCookies(Check):
 
     def run(self, ctx: ScanContext):
         base = ctx.target.base_url()
+        if not base:
+            return
         response = ctx.http.get(base)
         if response is None:
             return

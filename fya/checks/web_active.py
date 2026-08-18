@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from html import escape
+from typing import Optional
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
 from ..models import Confidence, Finding, Profile, ScanContext, Severity, TargetKind
@@ -71,7 +72,7 @@ _SENSITIVE_MARKERS = {
 _DANGEROUS_METHODS = {"TRACE", "PUT", "DELETE", "CONNECT", "PATCH"}
 
 
-def _same_host(url: str, host: str) -> bool:
+def _same_host(url: str, host: Optional[str]) -> bool:
     try:
         parsed = urlparse(url)
     except ValueError:
@@ -109,7 +110,7 @@ def _set_param(url: str, param: str, value: str) -> str:
 def _discover(ctx: ScanContext, cap: int, extra_params: set):
     base = ctx.target.base_url()
     host = ctx.target.host
-    urls = {}
+    urls: dict = {}
     seeds = []
     if base:
         seeds.append(base)

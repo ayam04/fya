@@ -61,7 +61,7 @@ instead of reinventing them.
 - **Adaptive.** Detects the stack, tunes payloads and request pacing, and runs only the checks that apply.
 - **You pick the mode.** Choose `recon`, `web`, `api`, `mobile`, `blackbox`, `graybox`, `whitebox`, or `full` (or an interactive menu), and watch a live per-category progress animation as it runs.
 - **Fits real apps and CI.** Authenticated scans (`--header`/`--cookie`/`--bearer`), scope and request-budget controls, an optional headless-browser crawler for single-page apps, and a baseline file to suppress known findings.
-- **58 checks, OWASP-mapped.** Web, API, TLS, black/gray-box, source static analysis, and APK, each tagged to OWASP Top 10 / MASVS and CWE, and grouped by test strategy in the report.
+- **91 checks, OWASP-mapped.** Advanced injection (command injection, XXE, blind SQLi, LFI wrappers), exposure (Spring Boot Actuator, debug pages, backup files), crypto and tokens (JWT weak secrets and header injection, TLS certificate strength), infrastructure as code and supply chain (Dockerfile, Compose, Kubernetes, Terraform, GitHub Actions), and deeper APK manifest and DEX analysis, on top of the web, API, TLS, black/gray-box and source checks. Each tagged to OWASP Top 10 / MASVS and CWE, and grouped by test strategy in the report.
 - **Orchestrates, does not reinvent.** Uses Nuclei, Nikto, sqlmap, nmap, and testssl when present; falls back to built-in checks when not.
 - **Safe by default.** Non-destructive, no flooding, request pacing that backs off on errors, localhost allowed, remote requires explicit authorization.
 - **CI-ready reports.** Console, JSON, SARIF, Markdown, and self-contained HTML, with `--fail-on` exit codes.
@@ -110,6 +110,16 @@ fya scan http://127.0.0.1:8000 --mode graybox          # IDOR, auth bypass, API
 fya scan http://127.0.0.1:8000 --mode full             # everything, aggressive
 fya scan http://127.0.0.1:8000 --interactive           # menu to pick mode + profile
 fya modes                                               # list the modes
+
+# narrow to a category, or to a single check id
+fya scan http://127.0.0.1:8000 --only web,tls          # whole categories
+fya scan http://127.0.0.1:8000 --only web.ssrf         # one check
+fya scan http://127.0.0.1:8000 --skip web.backup_files # everything except one check
+
+# see the full catalog
+fya checks                                              # every check, with target and profile
+fya checks --only apk                                   # filter to one category
+fya checks --json                                       # machine-readable catalog
 
 # authenticated and scoped, with a request budget
 fya scan http://127.0.0.1:8000 -H "Authorization: Bearer $TOKEN" --exclude '/logout' --max-requests 500
@@ -160,8 +170,9 @@ adapts automatically, slowing down on errors, timeouts, and slow responses.
 
 ## What it checks
 
-58 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE,
-and grouped by test strategy in the report. Full catalog in [docs/checks.md](docs/checks.md).
+91 checks across the areas below, each mapped to OWASP Top 10 / MASVS and a CWE,
+and grouped by test strategy in the report. Full catalog in [docs/checks.md](docs/checks.md),
+or run `fya checks`.
 
 | Area           | Checks |
 |----------------|--------|
@@ -169,14 +180,18 @@ and grouped by test strategy in the report. Full catalog in [docs/checks.md](doc
 | Web (active)   | Reflected XSS, error-based SQLi, open redirect, path traversal, CORS misconfiguration, advanced CORS bypasses (null/prefix/suffix), dangerous HTTP methods, sensitive file exposure |
 | Web (advanced) | Server-side template injection (SSTI), missing CSRF token, Host header injection, CRLF/header injection, forwarded-header cache poisoning, X-Original-URL/X-Rewrite-URL access-control bypass |
 | Web (secrets & files) | Secrets in client-side JavaScript, exposed source maps, dumpable .git/.svn/.hg/.bzr repos, leaked config/credential files, directory listing |
-| Web (SSRF & injection) | SSRF via cloud metadata and file:// (signature-based), MongoDB-style NoSQL injection, XPath / LDAP / SSI injection |
+| Web (exposure) | phpinfo / Apache server-status / Werkzeug debug console, backup and editor-temporary source files (.bak, .old, ~, .swp) |
+| Web (SSRF & injection) | SSRF via cloud metadata and file:// (signature-based), OS command injection (arithmetic oracle), blind SQL injection (boolean and time based), XXE with in-band file disclosure, LFI via php:// and data:// stream wrappers, MongoDB-style NoSQL injection, NoSQL operator injection in JSON bodies, XPath / LDAP / SSI injection |
+| Web (crypto & tokens) | JWTs signed with a crackable HMAC secret (offline), jku/x5u/kid header injection surface, active mixed content on HTTPS pages, serialized-object blobs in cookies, tokens and hidden fields |
 | Web (hardening) | CSP policy weaknesses, COOP/CORP/Permissions-Policy, cookie prefix and scope misuse, JWT (alg / expiry / sensitive claims), outdated JS libraries, security.txt and robots.txt |
 | Black box      | Input fuzzing and robustness: malformed, oversized, wrong-type, unicode, null-byte, and format-string payloads that surface 5xx crashes and leaked stack traces |
 | Gray box       | Insecure direct object references (IDOR), protected routes reachable without authentication |
-| White box (source) | Hardcoded secrets, risky sinks (eval, exec, shell=True, pickle, verify=False), dangerous GitHub Actions workflows (pwn-request, script injection), semgrep/bandit folded in when installed |
-| TLS           | Certificate validity and trust, weak protocol versions, missing HTTP to HTTPS upgrade |
-| API           | OpenAPI/Swagger exposure, GraphQL introspection, GraphQL hardening (field suggestions, batching, GET/CSRF), verbose error disclosure, unauthenticated admin/debug endpoints |
-| APK (static)  | Hardcoded secrets, cleartext HTTP endpoints, manifest issues (debuggable, backup, exported, cleartext, minSdk, permissions, unverified App Links, weak custom permissions), insecure WebView configuration |
+| White box (source) | Hardcoded secrets, risky sinks (eval, exec, shell=True, pickle, verify=False), dangerous GitHub Actions workflows (pwn-request, script injection), committed private keys and credential files, SQL built by string concatenation, signature/certificate/origin verification disabled in code, broken cipher modes and non-cryptographic RNG for security values, semgrep/bandit folded in when installed |
+| White box (IaC & supply chain) | Dockerfile and docker-compose hardening (root, floating tags, baked secrets, docker socket mounts), Kubernetes workloads and RBAC (privileged, host namespaces, wildcard rules), Terraform exposure (open ingress, public storage, missing encryption), CI supply chain (unpinned actions, write-all permissions, leaked secrets), dependencies resolved over plaintext or verification-disabled channels |
+| TLS           | Certificate validity and trust, weak certificate key sizes and MD5/SHA-1 signatures, weak protocol versions, missing HTTP to HTTPS upgrade |
+| API           | OpenAPI/Swagger exposure, GraphQL introspection, GraphQL hardening (field suggestions, batching, GET/CSRF), verbose error disclosure, unauthenticated admin/debug endpoints, unauthenticated Spring Boot Actuator endpoints (env, configprops, heapdump), OAuth/OIDC discovery misconfiguration, exposed SOAP WSDL contracts |
+| APK (manifest) | Hardcoded secrets, cleartext HTTP endpoints, manifest issues (debuggable, backup, exported, cleartext, minSdk, permissions, unverified App Links, weak custom permissions), insecure WebView configuration, network security config (user CAs, cleartext, no pinning), content provider exposure, backup and data-extraction rules, browser-reachable deep links, signing scheme (v1-only Janus, debug certificate) |
+| APK (DEX)     | Certificate or hostname validation disabled in code, weak or misused cryptography (ECB, DES/RC4, seeded SecureRandom, hardcoded keys), build hardening (debug compile, no R8 obfuscation, testOnly, shipped mapping.txt) |
 | Integrations  | Nuclei, Nikto, nmap, sqlmap, testssl/sslyze handoff, normalized into the same report |
 
 Load, stress, and network-chaos testing are deliberately out of scope: they are

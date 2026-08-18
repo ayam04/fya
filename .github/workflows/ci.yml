@@ -20,5 +20,8 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Lint
         run: ruff check .
+      - name: Types
+        if: matrix.python-version == '3.12'
+        run: mypy
       - name: Test
         run: pytest -q --cov=fya --cov-report=term-missing

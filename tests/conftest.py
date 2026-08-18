@@ -40,6 +40,25 @@ def live_server():
 
 
 @pytest.fixture
+def serve_app():
+    """Serve any WSGI app on a random localhost port. Returns a callable: app -> base_url."""
+    threads = []
+
+    def _serve(app):
+        thread = _ServerThread(app)
+        thread.start()
+        threads.append(thread)
+        return f"http://127.0.0.1:{thread.port}"
+
+    try:
+        yield _serve
+    finally:
+        for thread in threads:
+            thread.stop()
+            thread.join(timeout=5)
+
+
+@pytest.fixture
 def fake_apk(tmp_path):
     apk_path = tmp_path / "sample.apk"
     payload = (
