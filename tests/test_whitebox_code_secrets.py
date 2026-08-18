@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import functools
 import shutil
+import subprocess
+
+import pytest
 
 from fya.detect import detect_target
 from fya.engine import run_scan
@@ -64,23 +68,42 @@ def test_committed_key_material_service_account_json(tmp_path):
     assert {f.location for f in findings} == {"config/service-account.json"}
 
 
-def test_committed_key_material_git_remote_and_tracked_filter(tmp_path):
-    # A .git directory makes the check consult `git ls-files`; nothing is tracked here, so the
-    # untracked key must be suppressed while the .git/config remote credential still fires.
+def test_committed_key_material_reports_git_remote_credential(tmp_path):
     result = _scan(tmp_path, {
-        "deploy/id_rsa": _FAKE_PRIVATE_KEY,
         ".git/config": (
             '[remote "origin"]\n'
             "\turl = https://ci-bot:ghp_abcdefghijklmnopqrstuvwx@github.com/acme/app.git\n"
         ),
     })
     findings = _hits(result, "whitebox.committed_key_material")
-    locations = {f.location for f in findings}
-    assert ".git/config" in locations
-    if shutil.which("git"):
-        assert "deploy/id_rsa" not in locations
+    assert ".git/config" in {f.location for f in findings}
     remote = next(f for f in findings if f.location == ".git/config")
+    # The token is the secret being reported; it must never be echoed back in full.
     assert "ghp_abcdefghijklmnopqrstuvwx" not in remote.evidence
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="needs git on PATH")
+def test_committed_key_material_skips_untracked_files_in_a_real_repo(tmp_path):
+    # The tracked-file filter only engages when `git ls-files` actually answers, which needs a
+    # real repository: a hand-made .git directory is not one, and git versions disagree about
+    # that. Build a genuine repo so the suppression is exercised deterministically.
+    for rel, content in {
+        "committed/id_rsa": _FAKE_PRIVATE_KEY,
+        "untracked/id_rsa": _FAKE_PRIVATE_KEY,
+    }.items():
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    run = functools.partial(subprocess.run, cwd=str(tmp_path), check=True, capture_output=True)
+    run(["git", "init", "-q"])
+    run(["git", "add", "committed/id_rsa"])
+
+    result = run_scan(detect_target(str(tmp_path)), profile=Profile.PASSIVE, detect_external=False)
+    assert not result.errors, result.errors
+    locations = {f.location for f in _hits(result, "whitebox.committed_key_material")}
+    assert "committed/id_rsa" in locations
+    assert "untracked/id_rsa" not in locations
 
 
 def test_committed_key_material_silent_on_public_material(tmp_path):
