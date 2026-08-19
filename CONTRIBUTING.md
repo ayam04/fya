@@ -5,6 +5,19 @@ welcome. New checks should be small, mapped to OWASP and CWE, and
 non-destructive by default. Please read [SECURITY.md](SECURITY.md) before adding
 anything that sends probes to a target.
 
+## First time contributing?
+
+Every check you add for the first time is a great first PR. Start with the
+[`good first issue`](https://github.com/ayam04/fya/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+label: each issue is self-contained, names its OWASP/CWE mapping, gives the
+test expectations, and points at the exact existing check to copy. The
+"Add a check in one file" section below is the whole contract in one example.
+
+The process is: comment on the issue saying you'll take it, open a PR from a
+branch on your fork, and the maintainer will review within a few days. Keep
+the first PR focused on exactly one check; it keeps review fast and gets you
+merged sooner.
+
 ## The website is off-limits
 
 The `web/` folder (the Next.js site) is maintained by the project owner and is

@@ -260,7 +260,13 @@ Details in [docs/architecture.md](docs/architecture.md).
 
 Issues and PRs welcome. Adding a check is a single file dropped in
 `fya/checks/`, auto-discovered on import. Run `pytest` and `ruff check .`
-before submitting. See [CONTRIBUTING.md](CONTRIBUTING.md) for the walkthrough.
+before submitting.
+
+New contributor? Start with the
+[`good first issue`](https://github.com/ayam04/fya/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+label. Each one is a self-contained check with its OWASP/CWE mapping,
+test expectations, and the exact pattern to copy already written in. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full walkthrough.
 
 ## Acknowledgements
 
