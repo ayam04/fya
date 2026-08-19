@@ -2,7 +2,15 @@
 
 import { useState } from "react"
 
-export function CodeBlock({ code, className = "" }: { code: string; className?: string }) {
+export function CodeBlock({
+  code,
+  label,
+  className = "",
+}: {
+  code: string
+  label?: string
+  className?: string
+}) {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -16,16 +24,23 @@ export function CodeBlock({ code, className = "" }: { code: string; className?: 
   }
 
   return (
-    <div className={"group relative overflow-hidden rounded-xl border border-line bg-[#0d0f13] " + className}>
-      <button
-        onClick={copy}
-        aria-label="Copy to clipboard"
-        className="absolute right-2 top-2 cursor-pointer rounded-md border border-line bg-surface/90 px-2 py-1 text-xs text-muted backdrop-blur transition hover:text-ink focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-      >
-        {copied ? "copied" : "copy"}
-      </button>
-      <pre className="overflow-x-auto p-4 text-[13px] leading-relaxed text-ink/90">
-        <code className="font-mono">{code}</code>
+    <div className={"group relative border border-line bg-panel " + className}>
+      <div className="flex items-center justify-between border-b border-line px-3 py-1.5">
+        <span className="mono text-[11px] text-faint">{label ?? "shell"}</span>
+        <button
+          onClick={copy}
+          aria-label="Copy to clipboard"
+          className="mono cursor-pointer text-[11px] text-faint transition-colors hover:text-ink focus:text-ink"
+        >
+          {copied ? (
+            <span className="text-ok">copied ✓</span>
+          ) : (
+            "copy"
+          )}
+        </button>
+      </div>
+      <pre className="mono overflow-x-auto px-3 py-3 text-[13px] leading-relaxed text-ink/90">
+        <code>{code}</code>
       </pre>
     </div>
   )

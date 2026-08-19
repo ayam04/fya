@@ -1,20 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Reveal } from "@/components/Reveal"
 
 export const metadata: Metadata = {
-  title: "Changelog - fya",
+  title: "Changelog",
   description:
     "Every release of fya, the open-source security scanner: new checks, false-positive fixes, and CLI changes.",
 }
 
 type Group = { kind: "Added" | "Changed" | "Fixed"; items: string[] }
-type Release = {
-  version: string
-  date: string
-  headline: string
-  groups: Group[]
-}
+type Release = { version: string; date: string; headline: string; groups: Group[] }
 
 // Mirrors CHANGELOG.md in the repository root, which stays the canonical record for the package.
 const releases: Release[] = [
@@ -62,9 +56,7 @@ const releases: Release[] = [
     version: "0.5.1",
     date: "2026-07-03",
     headline: "Commercial-license notice in the CLI.",
-    groups: [
-      { kind: "Added", items: ["A commercial-license notice in the CLI banner, and COMMERCIAL-LICENSE.md."] },
-    ],
+    groups: [{ kind: "Added", items: ["A commercial-license notice in the CLI banner, and COMMERCIAL-LICENSE.md."] }],
   },
   {
     version: "0.5.0",
@@ -115,9 +107,7 @@ const releases: Release[] = [
       },
       {
         kind: "Fixed",
-        items: [
-          "Audit-driven false-positive fixes across reflected XSS, SSTI, CSRF, CORS and verbose-error detection.",
-        ],
+        items: ["Audit-driven false-positive fixes across reflected XSS, SSTI, CSRF, CORS and verbose-error detection."],
       },
     ],
   },
@@ -154,16 +144,18 @@ const releases: Release[] = [
   },
 ]
 
+// Group labels read like a diff: added is a pass, fixed is a caution, changed is info.
 const kindStyle: Record<Group["kind"], string> = {
-  Added: "text-ok/90 border-ok/25 bg-ok/[0.07]",
-  Changed: "text-brand2/90 border-brand2/25 bg-brand2/[0.07]",
-  Fixed: "text-muted border-line bg-white/[0.03]",
+  Added: "text-ok border-ok/30 bg-ok/10",
+  Changed: "text-info border-info/30 bg-info/10",
+  Fixed: "text-med border-med/30 bg-med/10",
 }
+const kindGlyph: Record<Group["kind"], string> = { Added: "+", Changed: "~", Fixed: "!" }
 
 function fmt(date: string) {
   return new Date(date + "T00:00:00Z").toLocaleDateString("en-US", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
     timeZone: "UTC",
   })
@@ -171,90 +163,99 @@ function fmt(date: string) {
 
 export default function Changelog() {
   return (
-    <div className="mx-auto grid max-w-5xl gap-10 px-5 pb-24 pt-28 lg:grid-cols-[190px_1fr]">
+    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-4 pb-24 pt-24 sm:px-6 lg:grid-cols-[200px_1fr]">
       <aside className="hidden lg:block">
-        <nav className="sticky top-24 space-y-0.5 text-sm" aria-label="Releases">
-          <div className="mb-3 text-[11px] font-medium uppercase tracking-[0.18em] text-muted">Releases</div>
-          {releases.map((r, i) => (
-            <a
-              key={r.version}
-              href={`#v${r.version}`}
-              className="flex items-baseline justify-between rounded-md px-2 py-1.5 text-muted transition-colors hover:bg-white/[0.04] hover:text-ink"
-            >
-              <span className="font-mono text-[13px]">{r.version}</span>
-              {i === 0 && <span className="text-[10px] uppercase tracking-wider text-brand">latest</span>}
-            </a>
-          ))}
+        <nav className="sticky top-24 text-sm" aria-label="Releases">
+          <div className="mono mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-faint">Releases</div>
+          <div className="space-y-0.5">
+            {releases.map((r, i) => (
+              <a
+                key={r.version}
+                href={`#v${r.version}`}
+                className="mono flex items-baseline justify-between rounded px-2 py-1.5 text-[13px] text-muted transition-colors hover:bg-white/[0.04] hover:text-ink"
+              >
+                <span>{r.version}</span>
+                {i === 0 && <span className="text-[10px] uppercase tracking-wider text-crit">latest</span>}
+              </a>
+            ))}
+          </div>
         </nav>
       </aside>
 
-      <div>
-        <Reveal>
-          <h1 className="font-display text-4xl font-semibold sm:text-5xl">Changelog</h1>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted">
-            Every release of fya. New checks land with the tests that prove they fire on a broken app and stay quiet
-            on a hardened one, so the entries below list the false-positive fixes as prominently as the features.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3 text-sm">
-            <Link href="/docs#checks" className="text-brand hover:brightness-110">
-              Full check catalog
-            </Link>
-            <span className="text-line-strong">/</span>
-            <a href="https://github.com/ayam04/fya/releases" className="text-muted transition-colors hover:text-ink">
-              Releases on GitHub
-            </a>
-            <span className="text-line-strong">/</span>
-            <a href="https://pypi.org/project/fya/" className="text-muted transition-colors hover:text-ink">
-              PyPI
-            </a>
-          </div>
-        </Reveal>
+      <div className="min-w-0 max-w-3xl">
+        <div className="mono flex items-center gap-4 text-[11px] tracking-[0.12em] text-faint">
+          <span className="text-muted">FYA(1)</span>
+          <span className="h-px flex-1 bg-line" />
+          <span className="hidden uppercase sm:inline">Release History</span>
+          <span className="hidden h-px flex-1 bg-line sm:block" />
+          <span className="text-muted">FYA(1)</span>
+        </div>
 
-        <div className="mt-14 space-y-14">
+        <h1 className="mono mt-8 text-3xl font-bold tracking-tight">Changelog</h1>
+        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted">
+          Every release of fya. New checks land with the tests that prove they fire on a broken app and stay quiet on a
+          hardened one, so the entries below list the false-positive fixes as prominently as the features.
+        </p>
+        <div className="mono mt-5 flex flex-wrap gap-3 text-[13px]">
+          <Link href="/docs#checks" className="text-crit hover:text-high">
+            check catalog →
+          </Link>
+          <span className="text-line-strong">·</span>
+          <a href="https://github.com/ayam04/fya/releases" className="text-muted transition-colors hover:text-ink">
+            releases on github
+          </a>
+          <span className="text-line-strong">·</span>
+          <a href="https://pypi.org/project/fya/" className="text-muted transition-colors hover:text-ink">
+            pypi
+          </a>
+        </div>
+
+        <div className="mt-14 space-y-16">
           {releases.map((r, i) => (
-            <Reveal key={r.version} delay={i === 0 ? 0 : 40}>
-              <section id={`v${r.version}`} className="scroll-mt-28">
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="font-display text-2xl font-semibold">
-                    <span className="font-mono text-brand">v</span>
-                    {r.version}
-                  </h2>
-                  {i === 0 && (
-                    <span className="rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-brand">
-                      latest
-                    </span>
-                  )}
-                  <time dateTime={r.date} className="text-sm text-muted">
-                    {fmt(r.date)}
-                  </time>
-                </div>
-                <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink/80">{r.headline}</p>
-                <div className="mt-4 h-px rule-fade" />
+            <section key={r.version} id={`v${r.version}`} className="scroll-mt-24">
+              <div className="flex flex-wrap items-baseline gap-3">
+                <h2 className="mono text-2xl font-bold">
+                  <span className="text-crit">v</span>
+                  {r.version}
+                </h2>
+                {i === 0 && (
+                  <span className="mono border border-crit/40 bg-crit/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-crit">
+                    latest
+                  </span>
+                )}
+                <time dateTime={r.date} className="mono text-[13px] text-faint">
+                  {fmt(r.date)}
+                </time>
+              </div>
+              <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink/80">{r.headline}</p>
+              <div className="rule mt-5" />
 
-                <div className="mt-6 space-y-6">
-                  {r.groups.map((g) => (
-                    <div key={g.kind}>
-                      <span
-                        className={
-                          "inline-block rounded-md border px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.12em] " +
-                          kindStyle[g.kind]
-                        }
-                      >
-                        {g.kind}
-                      </span>
-                      <ul className="mt-3 space-y-2.5">
-                        {g.items.map((item) => (
-                          <li key={item} className="flex gap-3 text-[15px] leading-relaxed text-muted">
-                            <span aria-hidden className="mt-2 h-1 w-1 shrink-0 rounded-full bg-line-strong" />
-                            <span className="max-w-2xl">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </Reveal>
+              <div className="mt-6 space-y-7">
+                {r.groups.map((g) => (
+                  <div key={g.kind}>
+                    <span
+                      className={
+                        "mono inline-flex items-center gap-1.5 border px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.12em] " +
+                        kindStyle[g.kind]
+                      }
+                    >
+                      <span aria-hidden>{kindGlyph[g.kind]}</span>
+                      {g.kind}
+                    </span>
+                    <ul className="mt-3 space-y-2.5">
+                      {g.items.map((item) => (
+                        <li key={item} className="flex gap-3 text-[14.5px] leading-relaxed text-muted">
+                          <span aria-hidden className="mono mt-0.5 shrink-0 text-faint">
+                            {kindGlyph[g.kind]}
+                          </span>
+                          <span className="max-w-2xl">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       </div>

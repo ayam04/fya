@@ -5,15 +5,22 @@ export function Callout({
   children: React.ReactNode
   tone?: "warn" | "note"
 }) {
-  const box = tone === "warn" ? "border-brand/25 bg-brand/[0.07]" : "border-line bg-surface"
-  const badge = tone === "warn" ? "bg-brand text-black" : "bg-white/10 text-ink"
-  const glyph = tone === "warn" ? "!" : "i"
+  const label = tone === "warn" ? "CAUTION" : "NOTE"
+  const chip =
+    tone === "warn"
+      ? "bg-med/15 text-med border-med/30"
+      : "bg-info/15 text-info border-info/30"
+
   return (
-    <div className={"flex gap-3 rounded-xl border p-4 " + box}>
-      <span className={"mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold " + badge}>
-        {glyph}
+    <div className="card flex gap-3.5 p-4">
+      <span
+        className={
+          "mono mt-0.5 h-fit shrink-0 border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.14em] " + chip
+        }
+      >
+        {label}
       </span>
-      <div className="text-sm leading-relaxed text-ink/85">{children}</div>
+      <div className="text-[13.5px] leading-relaxed text-ink/85">{children}</div>
     </div>
   )
 }
