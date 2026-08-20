@@ -268,6 +268,9 @@ label. Each one is a self-contained check with its OWASP/CWE mapping,
 test expectations, and the exact pattern to copy already written in. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the full walkthrough.
 
+Announcement / why-contribute writeup:
+[gist.github.com/ayam04/3a1bfac714b575da84f8fb5461d6d19e](https://gist.github.com/ayam04/3a1bfac714b575da84f8fb5461d6d19e)
+
 ## Acknowledgements
 
 Built on the shoulders of [OWASP](https://owasp.org/) (Top 10 and MASVS/MASTG),
