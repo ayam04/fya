@@ -141,3 +141,95 @@ class CookieScope(Check):
             evidence=evidence,
             references=["https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"],
         )
+
+@register
+class CookieFlags(Check):
+    name = "web.cookie_flags"
+    title = "Cookie security flags"
+    target_kinds = (TargetKind.WEB,)
+    min_profile = Profile.PASSIVE
+
+    _SESSIONISH = (
+        "session",
+        "sess",
+        "sid",
+        "auth",
+        "token",
+        "jwt",
+        "login",
+        "access",
+        "refresh",
+    )
+
+    def run(self, ctx: ScanContext):
+        base = ctx.target.base_url()
+        response = ctx.http.get(base)
+        if response is None:
+            return
+
+        is_https = base.lower().startswith("https://")
+
+        seen = set()
+        for cookie in response.cookies:
+            if cookie.name in seen:
+                continue
+            seen.add(cookie.name)
+
+            name = cookie.name
+            sessionish = any(
+                marker in name.lower() for marker in self._SESSIONISH
+            )
+
+            if not cookie.has_nonstandard_attr("HttpOnly"):
+                yield self._finding(
+                    base,
+                    f"Cookie '{name}' missing HttpOnly",
+                    Severity.LOW,
+                    "CWE-1004",
+                    (
+                        f"The cookie '{name}' is not marked HttpOnly, so "
+                        "client-side JavaScript can read it."
+                        if sessionish
+                        else (
+                            f"The cookie '{name}' is not marked HttpOnly, "
+                            "so client-side JavaScript can read it."
+                        )
+                    ),
+                    (
+                        "Add the HttpOnly attribute unless client-side "
+                        "JavaScript intentionally needs access to the cookie."
+                    ),
+                    f"Set-Cookie: {name} (no HttpOnly)",
+                )
+
+            if is_https and not cookie.secure:
+                yield self._finding(
+                    base,
+                    f"Cookie '{name}' missing Secure",
+                    Severity.LOW,
+                    "CWE-614",
+                    (
+                        f"The cookie '{name}' is served over HTTPS but is not "
+                        "marked Secure, so it may be sent over a plaintext "
+                        "HTTP connection."
+                    ),
+                    "Add the Secure attribute to cookies served over HTTPS.",
+                    f"Set-Cookie: {name} (no Secure)",
+                )
+
+    def _finding(self, base, title, severity, cwe, desc, fix, evidence):
+        return Finding(
+            check=self.name,
+            title=title,
+            severity=severity,
+            confidence=Confidence.HIGH,
+            category=_CATEGORY,
+            cwe=cwe,
+            description=desc,
+            remediation=fix,
+            location=base,
+            evidence=evidence,
+            references=[
+                "https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"
+            ],
+        )

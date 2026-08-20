@@ -15,6 +15,7 @@ _EXPECTED = {
     "web.xpath_ldap_ssi_injection",
     "web.modern_headers",
     "web.cookie_scope",
+    "web.cookie_flags",
     "web.cors_advanced",
     "web.cache_poison_headers",
     "web.url_override_headers",
