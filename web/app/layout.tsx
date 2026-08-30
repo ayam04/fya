@@ -6,12 +6,14 @@ import { Footer } from "@/components/Footer"
 import { Analytics } from "@vercel/analytics/next"
 
 // Display + body voice: Bricolage Grotesque (the only voice this page needs).
+// Served as the full variable font so font-optical-sizing can pick the
+// display cut for huge headlines instead of rendering them from the text cut.
 // Evidence register: JetBrains Mono for commands, findings, ids, and labels.
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-bricolage",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "variable",
 })
 
 const jbmono = JetBrains_Mono({

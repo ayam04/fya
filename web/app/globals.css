@@ -70,6 +70,15 @@ body {
 }
 
 /*
+  Bricolage is an optical-size variable font. The browser picks the axis from
+  font-size automatically, so a 140px statement gets the display cut and a
+  15px paragraph gets the text cut. Explicit so next/font never defaults away.
+*/
+:where(h1, h2, h3) {
+  font-optical-sizing: auto;
+}
+
+/*
   Elevation, one system, chosen per element:
   - .card  : hairline border, no shadow (evidence plates)
   - .lift  : one neutral shadow, no border

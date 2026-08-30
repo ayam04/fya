@@ -119,7 +119,7 @@ export default function Home() {
             <span className="text-crit">app.</span>
           </h1>
 
-          <p className="mono max-w-lg text-[13px] leading-[1.7] text-muted">
+          <p className="mono mt-12 max-w-lg text-[13px] leading-[1.7] text-muted">
             POINT IT AT YOUR APP. IT TRIES TO BREAK IT.
             <br />
             THAT IS THE WHOLE THING.
