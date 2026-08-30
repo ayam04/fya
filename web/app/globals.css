@@ -1,49 +1,45 @@
 @import "tailwindcss";
 
 /*
-  fya — visual world: "the tool's own output."
-  The site is rendered as fya's scan report crossed with a Unix man page.
-  Monospace carries the report grammar (commands, findings, CWE/OWASP ids,
-  request/response — real code and measurement, not costume); a system sans
-  carries long prose. Color is a functional SEVERITY SYSTEM, not one accent:
-  critical/high red, medium amber, low yellow, pass green, info cyan.
-  No glow, no blur orbs, no gradient-tinted cards, no pill CTAs.
+  fya — visual world: "WANTED".
+  The site is a poster and a docket. The name (f*** your app) finally gets to
+  say itself in monumental type; the evidence sits in stamped, corner-bracketed
+  plates like exhibit material. Bricolage Grotesque is the voice, JetBrains
+  Mono is the evidence register (commands, findings, CWE/OWASP ids), and the
+  severity system (crit red / med amber / low yellow / pass green / info cyan)
+  colors findings the way a report does. No glow, no gradients, no glass.
 */
 
 @theme {
-  /* ground + surfaces: flat, cool ink — deliberately not the neon-glow black */
-  --color-bg: #0a0c10;
-  --color-panel: #0f1217;
-  --color-panel2: #14171d;
-  --color-line: #20242c;
-  --color-line-strong: #333944;
+  /* ground + surfaces: warm near-black, a slight violet cast */
+  --color-bg: #0c0b0e;
+  --color-panel: #121116;
+  --color-panel2: #17151a;
+  --color-line: #2a2630;
+  --color-line-strong: #453f4d;
 
   /* text */
-  --color-ink: #e7e9ed;
-  --color-muted: #8b909b;
-  --color-faint: #7a7f8a;
+  --color-ink: #f0edf2;
+  --color-muted: #b3acbc;
+  --color-faint: #807a8b;
 
-  /* severity system — used the way a report uses it */
-  --color-crit: #ff5555;   /* critical / high — also fya's brand red */
+  /* severity system — the way a report uses color */
+  --color-crit: #ff4b5a;   /* critical / high — and the brand */
   --color-high: #ff7a5c;
   --color-med: #f0a63c;    /* medium */
   --color-low: #e6c94a;    /* low */
-  --color-ok: #55d38a;     /* pass / verified */
-  --color-info: #58b4e6;   /* info / note */
+  --color-ok: #3ddc84;     /* pass / verified */
+  --color-info: #5cc4f0;   /* info / note */
 
-  /* brand is the critical hue, framed as part of the system */
-  --color-brand: #ff5555;
+  --color-brand: #ff4b5a;
 
   --font-mono: var(--font-jbmono), ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 5.5rem;
-}
-
-html {
   overflow-x: clip;
 }
 
@@ -57,7 +53,7 @@ body {
 }
 
 ::selection {
-  background: rgba(255, 85, 85, 0.28);
+  background: rgba(255, 75, 90, 0.28);
 }
 
 /* Keyboard users need to see where they are. */
@@ -67,7 +63,7 @@ body {
   border-radius: 2px;
 }
 
-/* Structural layer is mono: this is the report/manual register. */
+/* The evidence register: commands, findings, ids, labels. */
 .mono {
   font-family: var(--font-mono);
   font-feature-settings: "liga" 0, "calt" 0;
@@ -75,8 +71,8 @@ body {
 
 /*
   Elevation, one system, chosen per element:
-  - .card  : hairline border, no shadow (the flat report body)
-  - .lift  : one neutral shadow, no border (the primary finding card)
+  - .card  : hairline border, no shadow (evidence plates)
+  - .lift  : one neutral shadow, no border
   Never both on the same element.
 */
 .card {
@@ -96,7 +92,7 @@ body {
   background: linear-gradient(90deg, transparent, var(--color-line-strong) 8%, var(--color-line-strong) 92%, transparent);
 }
 
-/* Terminal caret used in the masthead command. */
+/* Terminal caret used in command lines. */
 .caret {
   display: inline-block;
   width: 0.55ch;
@@ -111,9 +107,8 @@ body {
 }
 
 /*
-  One authored moment: the report "prints" — rows resolve from a scan-line
-  sweep on first view. Exponential ease-out, from already-legible content so
-  nothing is hidden if JS or motion is unavailable.
+  One authored moment: the hero "bangs in". Exponential ease-out from
+  already-legible content so nothing is hidden if JS or motion is unavailable.
 */
 @keyframes printin {
   from { opacity: 0; transform: translateY(6px); filter: blur(3px); }

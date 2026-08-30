@@ -1,7 +1,7 @@
 import Link from "next/link"
-import { Mark } from "@/components/Mark"
 
-// hideOnMobile keeps the header from crowding at 390px; docs + changelog stay reachable there.
+// Top bar in the Wanted register: a wordmark with a red period, mono links,
+// and a github chip. Fixed so long pages stay navigable.
 const links: [string, string, boolean][] = [
   ["/docs", "docs", false],
   ["/changelog", "changelog", false],
@@ -10,14 +10,13 @@ const links: [string, string, boolean][] = [
 
 export function Nav() {
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-bg/80 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-bg/85 backdrop-blur-md">
       <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="group flex items-center gap-2.5" aria-label="fya home">
-          <Mark size={22} className="rounded-[5px]" />
-          <span className="mono text-[15px] font-semibold tracking-tight text-ink">
-            fya<span className="text-crit">_</span>
+        <Link href="/" className="group flex items-baseline gap-2" aria-label="fya home">
+          <span className="text-[19px] font-extrabold leading-none tracking-tight text-ink">
+            fya<span className="text-crit">.</span>
           </span>
-          <span className="mono hidden text-[11px] text-faint sm:inline">(1)</span>
+          <span className="mono hidden text-[11px] text-faint sm:inline">wanted, not missing</span>
         </Link>
 
         <div className="mono flex items-center gap-0.5 text-[13px] sm:gap-1">

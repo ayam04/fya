@@ -1,297 +1,402 @@
-import Link from "next/link"
 import Image from "next/image"
+import Link from "next/link"
+import type { ReactNode } from "react"
 import { CodeBlock } from "@/components/CodeBlock"
 import { Callout } from "@/components/Callout"
 import { softwareApplication, faq } from "./structured-data.mjs"
+
+// The Wanted register. This page is a poster that reads like a docket: the
+// name says itself, the evidence ships in stamped plates, and every number is
+// a real count from the docs catalog or a real capture. No invented precision.
+
+function Stamp({ children, ok, tilt = -1 }: { children: ReactNode; ok?: boolean; tilt?: number }) {
+  return (
+    <span
+      className={
+        "mono inline-flex items-center gap-2 border bg-bg px-2.5 py-1 text-[10.5px] font-semibold uppercase " +
+        "tracking-[0.18em] " +
+        (ok ? "border-ok text-ok" : "border-[#ff4b5a] text-[#ff4b5a]")
+      }
+      style={{ transform: `rotate(${tilt}deg)` }}
+    >
+      <span
+        aria-hidden
+        className="inline-block h-[7px] w-[7px] bg-[#ff4b5a]"
+        style={ok ? { background: "#3ddc84" } : undefined}
+      />
+      {children}
+    </span>
+  )
+}
+
+function Plate({
+  fig,
+  cap,
+  src,
+  alt,
+  w,
+  h,
+}: {
+  fig: string
+  cap: string
+  src: string
+  alt: string
+  w: number
+  h: number
+}) {
+  return (
+    <figure className="relative border border-line bg-panel">
+      <span aria-hidden className="absolute -left-2.5 -top-2.5 h-5 w-5 border-l-2 border-t-2 border-[#ff4b5a]" />
+      <span aria-hidden className="absolute -right-2.5 -top-2.5 h-5 w-5 border-r-2 border-t-2 border-[#ff4b5a]" />
+      <span aria-hidden className="absolute -bottom-2.5 -left-2.5 h-5 w-5 border-b-2 border-l-2 border-[#ff4b5a]" />
+      <span aria-hidden className="absolute -bottom-2.5 -right-2.5 h-5 w-5 border-b-2 border-r-2 border-[#ff4b5a]" />
+      <div className="mono flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line px-4 py-2.5 text-[10.5px]">
+        <span className="font-bold text-[#ff4b5a]">{fig}</span>
+        <span className="text-faint">{cap}</span>
+      </div>
+      <Image src={src} alt={alt} width={w} height={h} priority className="h-auto w-full" />
+    </figure>
+  )
+}
 
 const targets = [
   {
     kind: "web",
     cmd: "fya scan http://localhost:3000",
-    body: "Fuzzes inputs, walks the routes, probes access control. Command injection proven by an arithmetic oracle. SSRF reaches cloud metadata.",
+    body: "Fuzzes inputs, walks the routes, probes access control. Injections proven by an arithmetic oracle.",
   },
   {
     kind: "apk",
     cmd: "fya scan app-release.apk",
-    body: "Unpacks the manifest and the DEX. Exported providers, deep-link hijacking, v1 signing, debug certificates.",
+    body: "Unpacks the manifest and the DEX. Exported providers, deep-link hijacking, v1 signing, debug certs.",
   },
   {
     kind: "source",
     cmd: "fya scan ./services",
-    body: "Reads the code and the infrastructure. Hardcoded secrets, SQL by concatenation, Docker and Kubernetes hardening, pwn-request in Actions.",
+    body: "Reads the code and the infrastructure. Hardcoded secrets, SQL by concatenation, weak IaC.",
   },
 ]
 
 const pipeline: [string, string][] = [
-  ["detect", "Decides whether the target is a server, an APK, or a source tree."],
-  ["fingerprint", "Reads stack, framework, and cookies from the first responses."],
-  ["plan", "Selects only the checks that fit the target and the profile."],
-  ["break", "Runs non-destructive probes, paced to what the target tolerates."],
-  ["prove", "De-duplicates, maps to OWASP and CWE, and keeps the receipts."],
-  ["report", "Writes console, JSON, SARIF, Markdown, or a self-contained HTML page."],
+  ["detect", "a server, an APK, or a source tree"],
+  ["fingerprint", "the stack, from the first responses"],
+  ["plan", "only the checks that fit the target"],
+  ["break", "non-destructive probes, paced to what it tolerates"],
+  ["prove", "dedup, OWASP and CWE, receipts kept"],
+  ["report", "console, JSON, SARIF, Markdown, or HTML"],
 ]
 
-// Severity is the site's color system turned into report grammar. A scan
-// report prints its key; the home page does the same. Colors are the real
-// tokens from globals.css, applied the way the report applies them.
 const legend: [string, string][] = [
-  ["crit / high", "bg-crit"],
-  ["medium", "bg-med"],
-  ["low", "bg-low"],
-  ["pass", "bg-ok"],
-  ["note", "bg-info"],
+  ["crit / high", "#ff4b5a"],
+  ["medium", "#f0a63c"],
+  ["low", "#e6c94a"],
+  ["pass", "#3ddc84"],
+  ["note", "#5cc4f0"],
 ]
-
-const coverage: [string, string, [string, string][]][] = [
-  [
-    "web",
-    "45 checks",
-    [
-      ["injection", "Command injection, XXE, boolean-blind SQLi, SSTI, XPath, LDAP, PHP stream wrappers, JSON NoSQL operators."],
-      ["exposure", "Actuators and heap dumps, phpinfo, the Werkzeug console, backup copies of live source."],
-      ["secrets", "Keys in client JavaScript, source maps, dumpable .git and .svn, leaked config, directory listing."],
-      ["crypto", "JWT signed with a guessable secret, jku and x5u header injection, certificate strength, serialized blobs."],
-      ["hardening", "Security headers, cookie flags, CSP holes, COOP and CORP, outdated JS libraries."],
-    ],
-  ],
-  [
-    "mobile and source",
-    "29 checks",
-    [
-      ["apk", "Network security config, exported providers, deep-link hijacking, v1 signing, debug certs, weak crypto."],
-      ["whitebox", "Hardcoded secrets, committed key material, SQL string concatenation, disabled certificate verification."],
-      ["iac", "Dockerfile and Compose hardening, Kubernetes workload security, Terraform exposure, GitHub Actions."],
-    ],
-  ],
-  [
-    "api and transport",
-    "17 checks",
-    [
-      ["api", "OpenAPI and Swagger exposure, GraphQL introspection, OIDC discovery, SOAP and WSDL."],
-      ["tls", "Certificate trust and expiry, weak protocols, key size, mixed content."],
-      ["tools", "Nuclei, Nikto, nmap, sqlmap, and testssl folded into one report when they are installed."],
-    ],
-  ],
-]
-
-function PrimaryCta({ href, children }: { href: string; children: string }) {
-  return (
-    <Link
-      href={href}
-      className="mono group inline-flex items-center gap-2 rounded-[3px] bg-ink px-4 py-2.5 text-[13px] font-semibold text-bg transition hover:bg-white"
-    >
-      {children}
-      <span className="transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
-    </Link>
-  )
-}
-
-function GithubCta() {
-  return (
-    <a
-      href="https://github.com/ayam04/fya"
-      className="mono inline-flex items-center gap-2 rounded-[3px] border border-line bg-panel px-4 py-2.5 text-[13px] text-ink transition-colors hover:border-line-strong hover:bg-panel2"
-    >
-      <span className="text-faint">$</span> github
-    </a>
-  )
-}
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplication) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }}
-      />
-      <section className="grid grid-cols-1 items-center gap-10 pt-24 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] xl:gap-14">
-        <div className="min-w-0">
-          <h1 className="mono reveal text-[30px] font-bold leading-[1.12] tracking-tight text-ink sm:text-[34px]">
-            Point it at your app.
+    <div className="mx-auto max-w-6xl px-5 sm:px-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplication) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
+
+      {/* the poster */}
+      <section className="relative overflow-hidden pb-24 pt-28">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-16 -top-10 select-none whitespace-nowrap text-[34vw] font-extrabold leading-none tracking-[-0.06em] text-[#ff4b5a] opacity-[0.05]"
+          style={{ transform: "rotate(-8deg)" }}
+        >
+          F***
+        </div>
+
+        <div className="relative">
+          <Stamp>security scanner</Stamp>
+
+          <h1 className="mt-7 text-[clamp(3.8rem,13vw,8.75rem)] font-extrabold leading-[0.9] tracking-[-0.05em]">
+            f*** your
             <br />
-            <span className="text-crit">It tries to break it.</span>
+            <span className="text-crit">app.</span>
           </h1>
 
-          <div className="mono reveal mt-7 flex items-center overflow-x-auto whitespace-nowrap border border-line bg-panel px-3.5 py-3 text-[13px]" style={{ animationDelay: "80ms" }}>
-            <span className="text-ok">$&nbsp;</span>
-            <span className="font-semibold text-crit">fya&nbsp;</span>
-            <span className="text-ink">scan&nbsp;</span>
-            <span className="text-info">&lt;target&gt;</span>
-            <span className="caret ml-1 shrink-0" aria-hidden />
+          <p className="mono max-w-lg text-[13px] leading-[1.7] text-muted">
+            POINT IT AT YOUR APP. IT TRIES TO BREAK IT.
+            <br />
+            THAT IS THE WHOLE THING.
+          </p>
+
+          <div className="mt-10 flex flex-wrap items-center gap-5">
+            <Link
+              href="/docs"
+              className="bg-[#ff4b5a] px-6 py-3 text-[14px] font-bold text-bg transition-colors hover:bg-[#ff6b76]"
+            >
+              read the docs &rarr;
+            </Link>
+            <span className="mono text-[13.5px] text-ink">
+              <span className="text-ok">$ </span>pip install fya
+            </span>
           </div>
 
-          <div className="reveal mt-7 flex flex-wrap gap-2.5" style={{ animationDelay: "140ms" }}>
-            <PrimaryCta href="/docs">read the docs</PrimaryCta>
-            <GithubCta />
+          <p className="mono mt-10 text-[11.5px] text-faint">
+            non-destructive. receipts, not he-said.
+          </p>
+        </div>
+      </section>
+
+      {/* the docket: web scan, real output */}
+      <section>
+        <Stamp tilt={1.5}>caught on camera</Stamp>
+        <div className="mono mt-4 text-[11px] uppercase tracking-[0.14em] text-faint">
+          docket 001 / subject: a local flask app / plea: guilty, proven
+        </div>
+        <div className="mt-4">
+          <Plate
+            fig="EXHIBIT A"
+            cap="a real scan of a real app. nothing staged."
+            src="/demo-web-scan.svg"
+            alt="fya web scan output: SQL injection, reflected XSS, SSRF to cloud metadata, exposed .git, CORS bypass, each mapped to a CWE and an OWASP category"
+            w={1238}
+            h={1221}
+          />
+        </div>
+        <p className="mono mt-4 text-[11px] text-faint">
+          real output from a real scan. every line above is fya talking, not the website.
+        </p>
+      </section>
+
+      {/* the rap sheet */}
+      <section className="mt-24">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-4">
+          {[
+            ["91", "checks, each with a test that keeps it silent on a hardened app"],
+            ["3", "target kinds from one command"],
+            ["6", "report formats, sarif included"],
+            ["0", "accounts, agents, or dashboards"],
+          ].map(([n, label], i) => (
+            <div key={label} className="border-l border-line pl-5">
+              <div className={"text-[clamp(2.5rem,5vw,4rem)] font-extrabold leading-none tracking-[-0.04em] tabular-nums " + (i === 0 ? "text-crit" : "text-ink")}>
+                {n}
+              </div>
+              <div className="mono mt-3 max-w-[24ch] text-[11.5px] leading-relaxed text-faint">{label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* wanted in three forms */}
+      <section id="targets" className="mt-28 scroll-mt-24">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-[clamp(1.8rem,4vw,2.9rem)] font-extrabold tracking-[-0.03em]">
+            Wanted in three forms.
+          </h2>
+          <span className="mono text-[11.5px] text-faint">one command, auto-detected</span>
+        </div>
+
+        <div className="mt-9 grid grid-cols-1 gap-0 md:grid-cols-3" style={{ borderTop: "1px solid var(--color-line)" }}>
+          {targets.map((t) => (
+            <div
+              key={t.kind}
+              className="border-b border-line px-6 py-7 md:border-r md:last:border-r-0"
+            >
+              <Stamp>#{t.kind}</Stamp>
+              <div className="mono mt-5 break-words text-[12.5px] text-ink">
+                <span className="text-ok">$ </span>
+                {t.cmd}
+              </div>
+              <p className="mt-3 text-[13.5px] leading-relaxed text-muted">{t.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* the catalog */}
+      <section id="coverage" className="mt-28 scroll-mt-24">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-[clamp(1.8rem,4vw,2.9rem)] font-extrabold tracking-[-0.03em]">
+            The catalog. <span className="text-crit">91 felonies.</span>
+          </h2>
+          <span className="mono text-[11.5px] text-faint">every check maps to OWASP and a CWE</span>
+        </div>
+
+        <div className="mt-9 grid grid-cols-1 gap-x-14 gap-y-14 lg:grid-cols-3">
+          <div>
+            <div className="flex items-baseline gap-3 border-b-2 border-[#ff4b5a] pb-3">
+              <span className="text-[15px] font-bold">web</span>
+              <span className="mono ml-auto text-[12px] font-bold text-crit">{"45 checks"}</span>
+            </div>
+            <ul className="mt-5">
+              {[
+                ["injection", "Command injection, XXE, boolean-blind SQLi, SSTI, LFI wrappers, NoSQL operators."],
+                ["exposure", "Actuators and heap dumps, phpinfo, the Werkzeug console, backup copies of live source."],
+                ["secrets", "Keys in client JavaScript, source maps, dumpable .git, leaked config."],
+              ].map(([term, body]) => (
+                <li key={term} className="mb-5 list-none">
+                  <span className="mono text-[11.5px] text-info">{term}</span>
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{body}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <div className="flex items-baseline gap-3 border-b-2 border-[#ff4b5a] pb-3">
+              <span className="text-[15px] font-bold">mobile and source</span>
+              <span className="mono ml-auto text-[12px] font-bold text-crit">{"29 checks"}</span>
+            </div>
+            <ul className="mt-5">
+              {[
+                ["apk", "Network security config, exported providers, deep-link hijacking, v1 signing, debug certs."],
+                ["whitebox", "Hardcoded secrets, committed key material, SQL by concatenation, verify disabled."],
+                ["iac", "Dockerfile and Compose hardening, Kubernetes workloads, Terraform exposure, Actions."],
+              ].map(([term, body]) => (
+                <li key={term} className="mb-5 list-none">
+                  <span className="mono text-[11.5px] text-info">{term}</span>
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{body}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <div className="flex items-baseline gap-3 border-b-2 border-[#ff4b5a] pb-3">
+              <span className="text-[15px] font-bold">api and transport</span>
+              <span className="mono ml-auto text-[12px] font-bold text-crit">{"17 checks"}</span>
+            </div>
+            <ul className="mt-5">
+              {[
+                ["api", "OpenAPI and Swagger exposure, GraphQL introspection, OIDC discovery, SOAP and WSDL."],
+                ["tls", "Certificate trust and expiry, weak protocols, key size, mixed content."],
+                ["tools", "Nuclei, Nikto, nmap, sqlmap, and testssl folded into one report when installed."],
+              ].map(([term, body]) => (
+                <li key={term} className="mb-5 list-none">
+                  <span className="mono text-[11.5px] text-info">{term}</span>
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{body}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <figure className="reveal lift min-w-0 overflow-hidden rounded-md" style={{ animationDelay: "200ms" }}>
-          <Image
-            src="/demo-web-scan.svg"
-            alt="fya scanning a local Flask app in the terminal, reporting high severity SQL injection, reflected XSS, SSRF to cloud metadata, an exposed .git directory, and a CORS bypass, each mapped to a CWE and an OWASP category"
-            width={1238}
-            height={1221}
-            priority
-            className="h-auto w-full"
-          />
-        </figure>
-      </section>
-
-      <section className="mt-20 grid grid-cols-2 gap-y-8 border-y border-line py-8 sm:grid-cols-4">
-        {(
-          [
-            ["91", "checks, each with a test that keeps it silent on a hardened app"],
-            ["3", "target kinds from one command"],
-            ["6", "report formats including SARIF"],
-            ["0", "accounts, agents, or dashboards"],
-          ] as [string, string][]
-        ).map(([n, label]) => (
-          <div key={label} className="min-w-0 px-1">
-            <div className="mono text-[30px] font-bold leading-none tracking-tight text-ink tabular-nums">{n}</div>
-            <div className="mt-2.5 max-w-[22ch] text-[12.5px] leading-relaxed text-muted">{label}</div>
-          </div>
-        ))}
-      </section>
-
-      <section className="card mt-20 flex flex-col gap-4 rounded-md p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <div className="mono shrink-0 text-[12px] font-medium uppercase tracking-[0.14em] text-faint">severity</div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          {legend.map(([label, swatch]) => (
-            <span key={label} className="mono flex items-center gap-2 text-[12px] text-muted">
-              <span aria-hidden className={"h-2.5 w-2.5 rounded-[2px] " + swatch} />
+        <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-3">
+          {legend.map(([label, hex]) => (
+            <span key={label} className="mono inline-flex items-center gap-2 border border-line px-2.5 py-1.5 text-[10.5px] uppercase tracking-[0.12em] text-faint">
+              <span aria-hidden className="inline-block h-2.5 w-2.5" style={{ background: hex }} />
               {label}
             </span>
           ))}
         </div>
-      </section>
 
-      <section id="targets" className="mt-20 scroll-mt-24">
-        <h2 className="mono text-[19px] font-bold tracking-tight text-ink sm:text-[24px]">
-          One command. Three kinds of target.
-        </h2>
-
-        <div className="mt-9 grid grid-cols-1 gap-px overflow-hidden rounded-md border border-line bg-line md:grid-cols-3">
-          {targets.map((t) => (
-            <div key={t.kind} className="min-w-0 bg-panel p-5 sm:p-6">
-              <div className="mono text-[13px] font-bold text-crit">{t.kind}</div>
-              <div className="mono mt-3 overflow-x-auto whitespace-nowrap text-[12px] text-ink/85">
-                <span className="text-ok">$ </span>
-                {t.cmd}
-              </div>
-              <p className="mt-3.5 text-[13.5px] leading-relaxed text-muted">{t.body}</p>
-            </div>
-          ))}
-        </div>
-
-        <figure className="lift mt-5 overflow-hidden rounded-md">
-          <Image
-            src="/demo-apk-scan.svg"
-            alt="fya scanning an Android APK in the terminal, listing manifest and DEX findings mapped to OWASP MASVS"
-            width={1238}
-            height={367}
-            className="h-auto w-full"
-          />
-          <figcaption className="mono border-t border-line px-4 py-2.5 text-[11.5px] text-faint">
-            An APK scan, captured from a real run.
-          </figcaption>
-        </figure>
-      </section>
-
-      <section className="mt-20">
-        <h2 className="mono text-[19px] font-bold tracking-tight text-ink sm:text-[24px]">
-          What happens after you hit enter.
-        </h2>
-        <div className="mt-8 max-w-3xl divide-y divide-line border-y border-line">
-          {pipeline.map(([title, body]) => (
-            <div key={title} className="grid grid-cols-1 gap-1 py-4 sm:grid-cols-[120px_1fr] sm:items-baseline sm:gap-6">
-              <div className="mono text-[14px] font-semibold text-ink">{title}</div>
-              <p className="mono text-[13.5px] leading-relaxed text-muted">{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="coverage" className="mt-20 scroll-mt-24">
-        <h2 className="mono text-[19px] font-bold tracking-tight text-ink sm:text-[24px]">
-          Every check maps to OWASP and a CWE.
-        </h2>
-
-        <div className="mt-9 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-10">
-          {coverage.map(([group, count, rows]) => (
-            <div key={group} className="min-w-0">
-              <div className="mono flex items-baseline gap-3 border-b border-line-strong pb-2.5">
-                <span className="text-[14px] font-bold text-ink">{group}</span>
-                <span className="ml-auto text-[12px] text-crit tabular-nums">{count}</span>
-              </div>
-              <dl className="mt-4 space-y-4">
-                {rows.map(([term, body]) => (
-                  <div key={term} className="min-w-0">
-                    <dt className="mono text-[12.5px] text-info">{term}</dt>
-                    <dd className="mt-1 text-[13px] leading-relaxed text-muted">{body}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="mt-8 flex flex-wrap gap-x-7 gap-y-3">
           <Link href="/docs#checks" className="mono text-[13px] text-crit hover:text-high">
             the full catalog, check by check &rarr;
           </Link>
           <a href="/sample-report.html" className="mono text-[13px] text-info hover:text-ink">
-            open a real HTML report &rarr;
+            open a real html report &rarr;
           </a>
         </div>
       </section>
 
-      <section id="skill" className="card mt-20 scroll-mt-24 rounded-md p-6 sm:p-9">
-        <h2 className="mono text-[19px] font-bold tracking-tight text-ink sm:text-[24px]">
-          No terminal? Tell Claude to <span className="text-crit">break it.</span>
+      {/* apk docket */}
+      <section className="mt-28">
+        <Stamp tilt={-1.5}>apk, also wanted</Stamp>
+        <div className="mt-4 grid max-w-4xl grid-cols-1 gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-end lg:gap-12">
+          <div className="order-2 lg:order-1">
+            <h2 className="text-[clamp(1.8rem,4vw,2.9rem)] font-extrabold tracking-[-0.03em]">
+              An APK is a target too.
+            </h2>
+            <p className="mt-4 max-w-md text-[14.5px] leading-relaxed text-muted">
+              Manifest and DEX, no androguard required. Export surface, deep links, signing scheme, debug certs. Found
+              on the spot, proven in the report.
+            </p>
+          </div>
+          <div className="order-1 lg:order-2">
+            <Plate
+              fig="EXHIBIT B"
+              cap="apk scan, captured from a real run."
+              src="/demo-apk-scan.svg"
+              alt="fya APK scan output: manifest and DEX findings mapped to OWASP MASVS"
+              w={1238}
+              h={367}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* the sequence */}
+      <section className="mt-28">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-[clamp(1.8rem,4vw,2.9rem)] font-extrabold tracking-[-0.03em]">The sequence.</h2>
+          <span className="mono text-[11.5px] text-faint">six stages, self-throttled</span>
+        </div>
+        <div className="mt-8 max-w-3xl" style={{ borderTop: "1px solid var(--color-line)" }}>
+          {pipeline.map(([v, d], i) => (
+            <div
+              key={v}
+              className="grid grid-cols-[2.25rem_7rem_1fr] items-baseline gap-4 border-b border-line py-4 max-sm:grid-cols-[2rem_minmax(5rem,auto)_1fr]"
+            >
+              <span className={"mono text-[12px] " + (i === 3 ? "font-bold text-[#ff4b5a]" : "text-faint")}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className={"mono text-[13px] font-bold " + (i === 3 ? "text-crit" : "text-ink")}>{v}</span>
+              <p className="mono text-[12.5px] leading-relaxed text-muted">{d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* claude skill */}
+      <section id="skill" className="mt-28 scroll-mt-24">
+        <Stamp tilt={1}>no terminal? fine</Stamp>
+        <h2 className="mt-6 max-w-2xl text-[clamp(1.8rem,4vw,2.9rem)] font-extrabold tracking-[-0.03em]">
+          Tell Claude to <span className="text-crit">break it.</span>
         </h2>
-        <p className="mt-3.5 max-w-2xl text-[15px] leading-relaxed text-muted">
-          fya ships as a Claude skill. Drop it into your setup and say what to scan. Claude confirms you own
-          the target, runs the same non-destructive checks, and reports back in the chat with no package to install.
+        <p className="mt-4 max-w-2xl text-[14.5px] leading-relaxed text-muted">
+          fya ships as a Claude skill. Drop it in, say what to scan, and Claude confirms you own the target, runs the
+          same non-destructive checks, and reports back in the chat with no package to install.
         </p>
-        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-8 grid max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
           <div className="min-w-0">
-            <div className="mono mb-2 text-[12px] text-faint">install</div>
+            <div className="mono mb-2 text-[10.5px] uppercase tracking-[0.18em] text-faint">install</div>
             <CodeBlock
               label="shell"
               code={"git clone https://github.com/ayam04/fya\ncp -r fya/skills/fya ~/.claude/skills/fya"}
             />
           </div>
           <div className="min-w-0">
-            <div className="mono mb-2 text-[12px] text-faint">ask</div>
+            <div className="mono mb-2 text-[10.5px] uppercase tracking-[0.18em] text-faint">ask</div>
             <CodeBlock
               label="claude"
               code={"scan http://localhost:3000 for vulnerabilities\ncheck ./app-release.apk for security issues"}
             />
           </div>
         </div>
-        <Link href="/docs#skill" className="mono mt-6 inline-block text-[13px] text-crit hover:text-high">
+        <Link href="/docs#skill" className="mono mt-7 inline-block text-[13px] text-crit hover:text-high">
           full skill setup in the docs &rarr;
         </Link>
       </section>
 
-      <section className="mt-20">
-        <h2 className="mono max-w-2xl text-balance text-[26px] font-bold leading-tight tracking-tight sm:text-[34px]">
-          Break your app before <span className="whitespace-nowrap text-crit">someone else does.</span>
+      {/* the close */}
+      <section className="mt-28 pb-28">
+        <Stamp ok tilt={0}>it is non-destructive, we checked</Stamp>
+        <h2 className="mt-8 max-w-3xl text-[clamp(2.4rem,6.5vw,4.9rem)] font-extrabold leading-[0.95] tracking-[-0.04em]">
+          Break your app before
+          <br />
+          <span className="text-crit">someone else does.</span>
         </h2>
-        <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted">
-          Start with your localhost right now. It takes one command and a couple of seconds.
+        <p className="mono mt-6 max-w-md text-[12.5px] leading-[1.7] text-muted">
+          start with your localhost right now. one command, a couple of seconds, receipts included. no accounts, no
+          agents. just you, your terminal, and a stack of receipts.
         </p>
-        <div className="mt-7 max-w-xs">
-          <CodeBlock code="pip install fya" label="install" />
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2.5">
-          <PrimaryCta href="/docs">read the docs</PrimaryCta>
-          <GithubCta />
+        <div className="mt-8 flex flex-wrap items-center gap-5">
+          <Link
+            href="/docs"
+            className="bg-[#ff4b5a] px-6 py-3 text-[14px] font-bold text-bg transition-colors hover:bg-[#ff6b76]"
+          >
+            read the docs &rarr;
+          </Link>
+          <span className="mono text-[13.5px] text-ink">
+            <span className="text-ok">$ </span>pip install fya
+          </span>
         </div>
         <div className="mt-10 max-w-2xl">
           <Callout tone="warn">

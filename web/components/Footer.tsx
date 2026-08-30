@@ -1,5 +1,3 @@
-import { Mark } from "@/components/Mark"
-
 const cols: [string, [string, string][]][] = [
   [
     "project",
@@ -22,25 +20,25 @@ const cols: [string, [string, string][]][] = [
 export function Footer() {
   return (
     <footer className="mt-24 border-t border-line">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="flex flex-col justify-between gap-10 sm:flex-row">
           <div className="max-w-xs">
-            <div className="flex items-center gap-2.5">
-              <Mark size={20} className="rounded-[5px]" />
-              <span className="mono text-[14px] font-semibold text-ink">
-                fya<span className="text-crit">_</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[18px] font-extrabold tracking-tight text-ink">
+                fya<span className="text-crit">.</span>
               </span>
+              <span className="mono text-[11px] text-faint">f*** your app</span>
             </div>
-            <p className="mt-3 text-[13px] leading-relaxed text-muted">
-              A security scanner that breaks your app before someone else does. Test only what you own or are
-              authorized to test.
+            <p className="mt-4 text-[13.5px] leading-relaxed text-muted">
+              A security scanner that breaks your app before someone else does. Non-destructive, receipted, and it only
+              targets what you own or are authorized to test.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-14 gap-y-6">
+          <div className="grid grid-cols-2 gap-x-16 gap-y-8">
             {cols.map(([title, items]) => (
               <div key={title}>
-                <div className="mono mb-3 text-[11px] uppercase tracking-[0.16em] text-faint">{title}</div>
+                <div className="mono mb-3 text-[10.5px] uppercase tracking-[0.2em] text-faint">{title}</div>
                 <ul className="mono space-y-2 text-[13px]">
                   {items.map(([label, href]) => (
                     <li key={label}>

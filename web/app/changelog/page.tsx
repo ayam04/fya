@@ -191,7 +191,7 @@ export default function Changelog() {
           <span className="text-muted">FYA(1)</span>
         </div>
 
-        <h1 className="mono mt-8 text-3xl font-bold tracking-tight">Changelog</h1>
+        <h1 className="mt-8 text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-none tracking-[-0.03em]">Changelog</h1>
         <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted">
           Every release of fya. New checks land with the tests that prove they fire on a broken app and stay quiet on a
           hardened one, so the entries below list the false-positive fixes as prominently as the features.

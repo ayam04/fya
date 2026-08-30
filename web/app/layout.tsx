@@ -1,9 +1,18 @@
 import type { Metadata, Viewport } from "next"
-import { JetBrains_Mono } from "next/font/google"
+import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { Nav } from "@/components/Nav"
 import { Footer } from "@/components/Footer"
 import { Analytics } from "@vercel/analytics/next"
+
+// Display + body voice: Bricolage Grotesque (the only voice this page needs).
+// Evidence register: JetBrains Mono for commands, findings, ids, and labels.
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+})
 
 const jbmono = JetBrains_Mono({
   subsets: ["latin"],
@@ -13,7 +22,7 @@ const jbmono = JetBrains_Mono({
 })
 
 export const viewport: Viewport = {
-  themeColor: "#0a0c10",
+  themeColor: "#0c0b0e",
   width: "device-width",
   initialScale: 1,
 }
@@ -55,7 +64,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={jbmono.variable}>
+    <html lang="en" className={`${bricolage.variable} ${jbmono.variable}`}>
       <body>
         <Nav />
         <main>{children}</main>

@@ -132,7 +132,7 @@ export default function Docs() {
         </div>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <h1 className="mono text-3xl font-bold tracking-tight">Documentation</h1>
+          <h1 className="text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-none tracking-[-0.03em]">Documentation</h1>
           <Link
             href="/changelog"
             className="mono border border-crit/40 bg-crit/10 px-2 py-0.5 text-[12px] font-medium text-crit"
