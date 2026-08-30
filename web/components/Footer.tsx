@@ -23,15 +23,6 @@ export function Footer() {
   return (
     <footer className="mt-24 border-t border-line">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        {/* man-page footer line: LEFT .... name version · date .... RIGHT */}
-        <div className="mono mb-10 hidden items-center gap-4 text-[12px] text-faint sm:flex">
-          <span className="text-muted">FYA(1)</span>
-          <span className="h-px flex-1 bg-line" />
-          <span>fya 0.6.0 · 2026-08-18</span>
-          <span className="h-px flex-1 bg-line" />
-          <span className="text-muted">FYA(1)</span>
-        </div>
-
         <div className="flex flex-col justify-between gap-10 sm:flex-row">
           <div className="max-w-xs">
             <div className="flex items-center gap-2.5">
@@ -66,8 +57,7 @@ export function Footer() {
 
         <div className="mono mt-12 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-6 text-[12px] text-faint">
           <span>© {new Date().getFullYear()} ayam04</span>
-          <span aria-hidden>·</span>
-          <span>PolyForm Noncommercial 1.0.0 — commercial use requires a license</span>
+          <span>PolyForm Noncommercial 1.0.0. Commercial use requires a license.</span>
         </div>
       </div>
     </footer>

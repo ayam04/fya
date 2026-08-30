@@ -196,15 +196,13 @@ export default function Changelog() {
           Every release of fya. New checks land with the tests that prove they fire on a broken app and stay quiet on a
           hardened one, so the entries below list the false-positive fixes as prominently as the features.
         </p>
-        <div className="mono mt-5 flex flex-wrap gap-3 text-[13px]">
+        <div className="mono mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[13px]">
           <Link href="/docs#checks" className="text-crit hover:text-high">
             check catalog →
           </Link>
-          <span className="text-line-strong">·</span>
           <a href="https://github.com/ayam04/fya/releases" className="text-muted transition-colors hover:text-ink">
             releases on github
           </a>
-          <span className="text-line-strong">·</span>
           <a href="https://pypi.org/project/fya/" className="text-muted transition-colors hover:text-ink">
             pypi
           </a>

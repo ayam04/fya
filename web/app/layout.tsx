@@ -21,11 +21,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://fya.ayamk.in"),
   title: {
-    default: "fya — point it at your app, it tries to break it",
-    template: "%s — fya",
+    default: "fya, point it at your app and it tries to break it",
+    template: "%s, fya",
   },
   description:
-    "An open-source security scanner that attacks your web app, Android APK, or source code the way an adversary would. 91 OWASP-mapped checks across black, gray, and white box — non-destructive, proven against a baseline, in your terminal or inside Claude.",
+    "An open-source security scanner that attacks your web app, Android APK, or source code the way an adversary would. 91 OWASP-mapped checks across black, gray, and white box. Non-destructive, proven against a baseline, in your terminal or inside Claude.",
   keywords: [
     "security scanner",
     "DAST",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   authors: [{ name: "ayam04" }],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "fya — point it at your app, it tries to break it",
+    title: "fya, point it at your app and it tries to break it",
     description:
       "91 OWASP-mapped checks across black, gray, and white box. It finds the holes, proves them with the exact request, and hands you the fix.",
     url: "https://fya.ayamk.in",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "fya — point it at your app, it tries to break it",
+    title: "fya, point it at your app and it tries to break it",
     description: "A security scanner that finds the holes, proves them with the exact request, and hands you the fix.",
   },
 }

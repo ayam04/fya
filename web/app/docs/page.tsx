@@ -4,7 +4,7 @@ import { Callout } from "@/components/Callout"
 import { DocsMobileNav } from "@/components/DocsMobileNav"
 
 export const metadata = {
-  title: "Docs — usage and reference",
+  title: "Docs, usage and reference",
   description:
     "Install fya, scan a web server or an APK, run it as a Claude skill, pick a mode and profile, run authenticated and scoped scans, gate CI with a baseline, and read the full 91-check catalog.",
 }
@@ -336,8 +336,8 @@ export default function Docs() {
           , which covers hobby projects, research, education, personal study, and nonprofit or government use.
         </p>
         <p className={p}>
-          <b className="text-ink">Commercial use requires a paid license</b> — using fya in, or for, a for-profit
-          company&apos;s products, services, or internal operations. To obtain one, contact{" "}
+          <b className="text-ink">Commercial use requires a paid license</b>. That means using fya in, or for, a
+          for-profit company&apos;s products, services, or internal operations. To obtain one, contact{" "}
           <Code>ayamullahkhan04@gmail.com</Code>. Versions before 0.5.0 were released under the MIT License and remain
           available under those terms.
         </p>
