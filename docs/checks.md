@@ -1,12 +1,12 @@
 # Check catalog
 
-This is the full set of 91 checks that ship in `fya/checks/`, grouped by area.
+This is the full set of **92 checks** that ship in `fya/checks/`, grouped by area.
 Each row lists the check `name` (its dotted id), the severity range it can emit,
 the OWASP Top 10 or OWASP MASVS category it maps to, and the CWE it references.
 
 Severity ranges reflect what a single check can yield across cases. A check that
-always emits one severity shows a single value; one that varies by finding shows
-a range. Profiles are ordered `passive` < `safe` < `aggressive`; a check runs
+always emits one severity shows a single value; one that varies by finding shows a
+range. Profiles are ordered `passive` < `safe` < `aggressive`; a check runs
 only at or above its minimum profile.
 
 ## Web passive
@@ -18,12 +18,13 @@ Read-only checks. Minimum profile: `passive`.
 | `web.security_headers` | info - medium | A05:2021 Security Misconfiguration | CWE-693, CWE-319, CWE-1021, CWE-200 |
 | `web.version_disclosure` | low | A05:2021 Security Misconfiguration | CWE-200 |
 | `web.insecure_cookies` | low - medium | A05:2021 Security Misconfiguration | CWE-614 |
+| `web.cookie_flags` | low | A05:2021 Security Misconfiguration | CWE-1004, CWE-614 |
 
 Notes: `web.security_headers` reports separately on missing
 Content-Security-Policy (medium, CWE-693), Strict-Transport-Security (medium,
 CWE-319), X-Content-Type-Options (low, CWE-693), clickjacking protection (low,
 CWE-1021), and Referrer-Policy (info, CWE-200). `web.insecure_cookies` is medium
-when the `HttpOnly` flag is missing, otherwise low.
+when the `HttpOnly` flag is missing, otherwise low. `web.cookie_flags` reports cookies missing `HttpOnly` (CWE-1004), and on HTTPS targets, cookies missing `Secure` (CWE-614).
 
 ## Web active
 
